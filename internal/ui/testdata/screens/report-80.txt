@@ -1,0 +1,21 @@
+ ◆ Panal  report · 15:04:05       ■ 2 active ■ 1 no quota/permission ■ 1 at rest
+   1 Dashboard   2 History   3 Report   4 Timeline   ? Help 
+  REPORT · last 7 days
+
+  AGENT     RUNS      % DONE OK       FAILED  NO QUOTA   BROKE   MEDIAN      
+  agy       1         ██████████ 100% 0       0          0       20 min      
+  claude    1         ██████████ 100% 0       0          0       24 min      
+  codex     1         ░░░░░░░░░░   0% 1       0          1       —           
+  opencode  1         ░░░░░░░░░░   0% 0       1          0       —           
+
+  broke only counts runs already checked (opened with tab or d)
+
+  BY TASK TYPE · no failure / runs
+              tests      
+  agy         1/1        
+  claude      1/1        
+  codex       0/1        
+  opencode    0/1        
+
+  delegated: 1 run done
+ ←→  period   tab  toggle   esc  back   ?  help   q  quit

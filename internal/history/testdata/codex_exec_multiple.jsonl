@@ -1,0 +1,2 @@
+{"type":"thread.started","thread_id":"01a0da3d-multiple"}
+{"type":"turn.completed","usage":{"input_tokens":50,"cached_input_tokens":0,"output_tokens":10}}

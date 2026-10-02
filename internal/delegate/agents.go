@@ -1,0 +1,148 @@
+package delegate
+
+import (
+	"fmt"
+	"strings"
+)
+
+// attempt is everything an agent's command line needs.
+type attempt struct {
+	Link     Link
+	Task     string // full task text
+	TaskFile string // file holding the full task, when one was written ("" otherwise)
+	Dir      string // where the agent works
+	ReadOnly bool
+	Log      string // the attempt's log; codex and agy also write next to it
+}
+
+// invocation is how to run one CLI non-interactively.
+type invocation struct {
+	Args  []string // after the program name
+	Stdin string   // fed to the CLI's stdin ("" = no stdin)
+	// The CLI's stdout is JSONL events (codex --json): it goes to Log+".jsonl"
+	// and the terminal gets a readable line per event.
+	JSONEvents bool
+	// LastMessage is a file the CLI writes its final answer to; it is
+	// appended to the log when the attempt ends.
+	LastMessage string
+	// NeedsTaskFile: the task must be in TaskFile (the command refers to it).
+	NeedsTaskFile bool
+}
+
+// agent knows one CLI.
+type agent struct {
+	// build returns the command line for a. When the task cannot go on the
+	// command line as is and no task file exists yet, it returns
+	// NeedsTaskFile and is called again once one exists.
+	build func(a attempt) invocation
+}
+
+var agents = map[string]agent{
+	"codex":    {build: codexArgs},
+	"agy":      {build: agyArgs},
+	"opencode": {build: opencodeArgs},
+}
+
+// maxArgvTask: a task longer than this does not go on the command line
+// (Windows caps a whole command line at 32767 characters).
+const maxArgvTask = 24000
+
+// codexArgs: `codex exec` reads the prompt from stdin when it is "-". --json
+// streams events (what panal's activity and history readers parse from
+// <log>.jsonl), -o writes the final answer, -s is codex's own sandbox:
+// read-only, or workspace-write (it may edit files and run commands inside
+// -d only).
+//
+//	codex exec --json -o <log>.last -C <dir> -s workspace-write|read-only
+//	           [-m <model>] [-c model_reasoning_effort="<effort>"] -   < task
+func codexArgs(a attempt) invocation {
+	sandbox := "workspace-write"
+	if a.ReadOnly {
+		sandbox = "read-only"
+	}
+	args := []string{"exec", "--json", "-o", a.Log + ".last", "-C", a.Dir, "-s", sandbox}
+	if a.Link.Model != "" {
+		args = append(args, "-m", a.Link.Model)
+	}
+	if a.Link.Effort != "" {
+		args = append(args, "-c", fmt.Sprintf("model_reasoning_effort=%q", a.Link.Effort))
+	}
+	args = append(args, "-")
+	return invocation{Args: args, Stdin: a.Task, JSONEvents: true, LastMessage: a.Log + ".last"}
+}
+
+// agyArgs: `agy -p <prompt>` runs one turn and prints the answer. Its own log
+// goes to <log>.log (panal's agy readers look for *-agy-*.txt.log). Writes:
+// --dangerously-skip-permissions (print mode cannot ask). Read-only: plan
+// mode plus agy's terminal sandbox.
+//
+//	agy -p <task> --log-file <log>.log [--model <model>] [--effort <effort>]
+//	    --dangerously-skip-permissions | --mode plan --sandbox
+func agyArgs(a attempt) invocation {
+	prompt := a.Task
+	inv := invocation{}
+	if len(prompt) > maxArgvTask {
+		if a.TaskFile == "" {
+			return invocation{NeedsTaskFile: true}
+		}
+		prompt = fileTaskPrompt(a.TaskFile)
+		inv.NeedsTaskFile = true
+	}
+	args := []string{"-p", prompt, "--log-file", a.Log + ".log"}
+	if a.Link.Model != "" {
+		args = append(args, "--model", a.Link.Model)
+	}
+	if a.Link.Effort != "" {
+		args = append(args, "--effort", a.Link.Effort)
+	}
+	if a.ReadOnly {
+		args = append(args, "--mode", "plan", "--sandbox")
+	} else {
+		args = append(args, "--dangerously-skip-permissions")
+	}
+	inv.Args = args
+	return inv
+}
+
+// opencodeArgs: `opencode run <message>` runs one turn in the current
+// directory. On Windows opencode is usually an npm .cmd shim, which goes
+// through cmd.exe: a task with quotes, %, &, |, <, >, ^, ! or line breaks
+// does not survive that, so such a task is attached with --file and the
+// message only points to it. Model: provider/model, with #variant for the
+// effort. Writes: --auto (approve what is not explicitly denied). Read-only:
+// the built-in plan agent, without --auto.
+//
+//	opencode run [--model <provider/model>[#<effort>]] --auto | --agent plan
+//	             (<task> | --file <task file> "<pointer message>")
+func opencodeArgs(a attempt) invocation {
+	args := []string{"run"}
+	if a.Link.Model != "" {
+		m := a.Link.Model
+		if a.Link.Effort != "" && !strings.Contains(m, "#") {
+			m += "#" + a.Link.Effort
+		}
+		args = append(args, "--model", m)
+	}
+	if a.ReadOnly {
+		args = append(args, "--agent", "plan")
+	} else {
+		args = append(args, "--auto")
+	}
+	if shellSafe(a.Task) && len(a.Task) <= 2000 {
+		return invocation{Args: append(args, a.Task)}
+	}
+	if a.TaskFile == "" {
+		return invocation{NeedsTaskFile: true}
+	}
+	args = append(args, "--file", a.TaskFile, "The task is in the attached file. Do what it says.")
+	return invocation{Args: args, NeedsTaskFile: true}
+}
+
+func fileTaskPrompt(path string) string {
+	return "Your task is in the file " + path + ". Read it and do what it says."
+}
+
+// shellSafe: s can go through cmd.exe as one quoted argument unchanged.
+func shellSafe(s string) bool {
+	return !strings.ContainsAny(s, "\"%&|<>^!\r\n")
+}

@@ -1,0 +1,5 @@
+I0926 13:39:30.101010     771 main.go:88] agy arranca
+I0926 13:39:33.451589     771 stream_helpers.go:176] Cortex API Chunk: data: {"response": {"candidates": [{"content": {"role": "model","parts": [{"functionCall": {"name": "run_command","args": {"toolSummary": "List workspace directory","CommandLine": "dir","IsDaemon": false,"Cwd": "C:\\Codigo\\wt\\tui-bonita","WaitMsBeforeAsync": 2000,"toolAction": "Listing directory contents"}}}]}}]}}
+I0926 13:39:35.483256     867 generation.go:1176] Cortex API Request: {"contents":[{"role":"model","parts":[{"functionCall":{"id":"call_1213072","name":"run_command","args":{"CommandLine":"dir","toolAction":"Listing directory contents","toolSummary":"List workspace directory"}}}]}]}
+I0926 13:39:40.120361     978 stream_helpers.go:176] Cortex API Chunk: data: {"response": {"candidates": [{"content": {"role": "model","parts": [{"functionCall": {"name": "view_file","args": {"toolSummary": "View README.md","toolAction": "Reading README.md","AbsolutePath": "C:\\Codigo\\wt\\tui-bonita\\README.md"}}}]}}]}}
+I0926 13:39:41.000001     978 step_handler.go:52] step done

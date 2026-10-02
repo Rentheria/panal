@@ -1,0 +1,16 @@
+{
+ "version": 1,
+ "sello": "20260924-081211",
+ "agente": "codex",
+ "modelo": "gpt-6-luna",
+ "esfuerzo": "low",
+ "encargo": "Crea el archivo b.txt con el texto adios. No hagas git commit.",
+ "carpeta": "C:\\Codigo\\wt\\_juguete",
+ "solo_leer": false,
+ "pid": 21152,
+ "registro": "C:\\Users\\alguien\\.ct-delegar\\registros\\20260924-081211-codex-gpt-6-luna.txt",
+ "inicio": "2026-09-24T08:12:11-06:00",
+ "estado": "sin_cuota",
+ "fin": "2026-09-24T08:12:13-06:00",
+ "rc": 75
+}

@@ -1,0 +1,13 @@
+ ◆ Panal  detail · claude · 15:04:05                               ● 2  ◐ 1  ○ 1
+‹   claude   ● orchestrating    agy   codex   opencode  ›
+
+╭──────────────────────────────────────────────────────────────────────────────╮
+│ CLAUDE  ·  orchestrating                                                     │
+│                                                                              │
+│ dir      <temp dir>                                                          │
+│ cost     $0.85                                                               │
+│ context  18%                                                                 │
+│ session  sess-01-claude                                                      │
+│ tasks    14 completed                                                        │
+╰──────────────────────────────────────────────────────────────────────────────╯
+ ←→  other agent   ↑↓  scroll   l  log   d  diff   esc  back

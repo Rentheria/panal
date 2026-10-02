@@ -1,0 +1,5 @@
+{"type":"user","timestamp":"2026-09-29T01:40:00.000Z","message":{"role":"user","content":"revisa las pruebas"}}
+{"type":"assistant","timestamp":"2026-09-29T01:40:05.000Z","message":{"role":"assistant","content":[{"type":"text","text":"Voy a leer el archivo."},{"type":"tool_use","id":"t1","name":"Read","input":{"file_path":"C:\\Codigo\\agentes-tui\\internal\\ui\\ui.go"}}]}}
+{"type":"user","timestamp":"2026-09-29T01:40:06.000Z","message":{"role":"user","content":[{"type":"tool_result","tool_use_id":"t1","content":"..."}]}}
+{"type":"assistant","timestamp":"2026-09-29T01:41:10.500Z","message":{"role":"assistant","content":[{"type":"tool_use","id":"t2","name":"Bash","input":{"command":"go test ./...","description":"Run all tests"}}]}}
+{"type":"user","timestamp":"2026-09-29T01:41:12.000Z","message":{"role":"user","content":[{"type":"tool_result","tool_use_id":"t2","content":"ok"}]}}

@@ -1,0 +1,38 @@
+# Panal
+
+> Panal (`panal`) is a terminal dashboard, written in Go with Bubble Tea, for the AI coding agents orchestrated from Claude Code: opencode, codex, agy and Claude Code itself. It shows live cards with pixel-art mascots, live quotas, run history, reports and a timeline, and only reads the agents' files. `panal delegate` hands a task to codex, agy or opencode with quota fallback, and its router (`-c auto`) learns from every run which agent, model and effort fits each task type and tier (Beta posteriors, Thompson sampling, cost-aware), with `panal route` as a dry run and `panal feedback` to correct it.
+
+Module `github.com/AlbertoVasquezR/panal`, Apache-2.0 license, Go 1.27+. Install with `go install github.com/AlbertoVasquezR/panal/cmd/panal@latest`. Panal writes only its own files in `~/.panal`.
+
+## Docs
+
+- [README](README.md): overview, quick start, commands, keys
+- [Getting started](docs/getting-started.md): install, connecting each agent, the Claude Code status line, `panal -doctor`
+- [Dashboard](docs/dashboard.md): views, cards, every key, glyphs, mascots, live quota, alerts, themes
+- [Delegating](docs/delegate.md): `panal delegate` flags, chain, exit codes, sandboxing per agent, files written
+- [Router](docs/router.md): tier rules, outcomes, priors and formulas, Thompson sampling, feedback, `panal route`, external router contract
+- [Models](docs/models.md): model discovery per CLI, cache, `pool = auto`, `models` / `exclude` patterns, cost heuristic
+- [Configuration](docs/configuration.md): every `panal.conf` key and environment variable
+- [Reference](docs/reference.md): run file JSON schema, report formats, status line, `-serve` for multiple machines
+
+## Contributing
+
+- [AGENTS.md](AGENTS.md): rules, commands, repo map, invariants, where to change what
+- [Architecture](docs/ARCHITECTURE.md): data flow, package responsibilities, key types
+- [CONTRIBUTING.md](CONTRIBUTING.md): build, golden screens, ground rules
+
+## Source
+
+- [cmd/panal](cmd/panal/main.go): flags and subcommand dispatch
+- [internal/router](internal/router): tiers, outcomes, posteriors, Thompson choice
+- [internal/delegate](internal/delegate): `panal delegate`, `route`, `models`
+- [internal/models](internal/models): model discovery and cost heuristic
+- [internal/readers](internal/readers): one read-only reader per agent
+- [internal/runs](internal/runs/runs.go): the run file format
+- [internal/ui](internal/ui): the Bubble Tea dashboard
+
+## Optional
+
+- [Work journal](docs/JOURNAL.md): what was done, why, and what is pending
+- [UX audit](docs/ux-audit.md): open UI findings
+- [UI design guide](.claude/skills/panal-ux/SKILL.md): palette, glyphs, mascots, sizes

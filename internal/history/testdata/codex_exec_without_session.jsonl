@@ -1,0 +1,3 @@
+{"type":"thread.started","thread_id":"01a0da3d-no-session"}
+{"type":"turn.completed","usage":{"input_tokens":1200,"cached_input_tokens":300,"output_tokens":300}}
+{"type":"turn.completed","usage":{"input_tokens":800,"cached_input_tokens":200,"output_tokens":200}}
