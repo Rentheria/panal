@@ -246,13 +246,16 @@ type AgentInfo struct {
 
 // PetInfo is one agent's own mascot, in the frame's "pets" list (-all).
 type PetInfo struct {
-	Name   string `json:"name"`
-	Status string `json:"status"`
-	Glyph  string `json:"glyph"`
-	Color  string `json:"color"`
-	Mood   string `json:"mood"`
-	Line   string `json:"line"`
-	Raster Raster `json:"raster"`
+	Name     string `json:"name"`
+	Status   string `json:"status"`
+	Glyph    string `json:"glyph"`
+	Color    string `json:"color"`
+	Mood     string `json:"mood"`
+	Line     string `json:"line"`
+	Model    string `json:"model,omitempty"`
+	Task     string `json:"task,omitempty"`     // the task's goal, one line
+	Activity string `json:"activity,omitempty"` // the last thing it did, while working
+	Raster   Raster `json:"raster"`
 }
 
 // Raster is the mascot as cells; see EncodeCells.
@@ -366,6 +369,11 @@ func (p *Pet) own(o state.Row, now time.Time) PetInfo {
 		Color:  Hex(ui.StatusColor(o.Status)),
 		Mood:   MoodOf(mode),
 		Line:   Line(o, now),
+		Model:  o.Model,
+		Task:   oneLine(o.Task),
+	}
+	if o.Status == state.Working || o.Status == state.Orchestrating {
+		pi.Activity = oneLine(o.Activity)
 	}
 	if s, ok := mascots.All[o.Agent]; ok {
 		pi.Raster = EncodeRaster(crop(s.Cells(mode, n, ui.MascotEffects(o)), p.opts.Cols, p.opts.Rows))
@@ -412,4 +420,16 @@ func crop(cells [][]mascots.Cell, cols, rows int) [][]mascots.Cell {
 		out[i] = line[x0 : x0+cols]
 	}
 	return out
+}
+
+// oneLine: the first line of s, trimmed and cut to 120 characters.
+func oneLine(s string) string {
+	if i := strings.IndexAny(s, "\r\n"); i >= 0 {
+		s = s[:i]
+	}
+	s = strings.TrimSpace(s)
+	if r := []rune(s); len(r) > 120 {
+		s = string(r[:119]) + "…"
+	}
+	return s
 }
