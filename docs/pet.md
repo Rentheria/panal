@@ -44,25 +44,72 @@ then the last ones give way to `…`).
 ## Inside Claude Code: the `panal-pet` plugin
 
 The repo is also a Claude Code plugin marketplace with one plugin,
-[`plugins/panal-pet`](../plugins/panal-pet). It runs `panal pet -stream` and
-draws the latest frame inside Claude Code: the mascot as raster cells with the
-status lines beside it.
+[`plugins/panal-pet`](../plugins/panal-pet). It keeps one
+`panal pet -stream -all` running and draws your agents inside Claude Code.
 
 ```text
 /plugin marketplace add AlbertoVasquezR/panal
 /plugin install panal-pet@panal
 ```
 
-| command | where the pet shows |
-|---|---|
-| `/panal band` (default) | a band above the prompt |
-| `/panal pane` | a pane beside the conversation |
-| `/panal off` | nowhere |
+**Above the prompt (default).** A small honeycomb at the right edge, one cell
+per agent in its status color, so it takes one line and stays out of the way:
 
-The choice is remembered across sessions. `panal` must be on your `PATH`; if it
-is missing or too old, the plugin says so once and keeps retrying, waiting a
-little longer each time. On surfaces that cannot draw raster cells (the
-desktop app) it shows the status lines only.
+```text
+                                                              ⬢⬢⬢ Panal
+❯ _
+```
+
+Hover the honeycomb and every agent's mascot appears above it, each with its
+name and status glyph; click **Panal** to keep them open (click again to hide
+them). Only the mascots' pixels are painted: the background stays your
+terminal's.
+
+```text
+     ▄▄▄▄▄▄           ▄▄▄▄                ▀
+    █▀████▀█         ██████  ▄       █▀▀▀▀▀▀█ ▄
+   ▄████████▄       ▄▀▀▀▀▀▀▄         ████████
+   ▀████████▀█      ▀▀█▀▀█▀▀        ▄████████▄
+    ▀ ▀  ▀ ▀         ▀▀  ▀▀          ▀▀    ▀▀
+    claude ●          agy ✔            codex ✔
+                                                              ⬢⬢⬢ Panal
+```
+
+**In a pane.** `/panal pane` shows one card per agent: the mascot, its name,
+status and time, model, and its last action while it works (its task
+otherwise). The border takes the status color; the pet (the agent
+orchestrating, or the one working) is marked with ★.
+
+```text
+◆ Panal  1 orchestrating · 2 done
+╭──────────────────────────────────────────────────╮
+│    ▄▄▄▄▄▄     claude ★                           │
+│   █▀████▀█    ● orchestrating · 12 min           │
+│  ▄████████▄   Opus 5.5 (1M context) · medium     │
+│  ▀████████▀█  Running go test ./...              │
+│   ▀ ▀  ▀ ▀                                       │
+╰──────────────────────────────────────────────────╯
+╭──────────────────────────────────────────────────╮
+│    ▄▄▄▄       agy                                │
+│   ██████  ▄   ✔ done · 3 min ago                 │
+│  ▄▀▀▀▀▀▀▄     gemini-3.8-flash-medium            │
+│  ▀▀█▀▀█▀▀     Add a footer to the report view    │
+│   ▀▀  ▀▀                                         │
+╰──────────────────────────────────────────────────╯
+```
+
+| command | where the pets show |
+|---|---|
+| `/panal band` (default; also `top`, `on`, `show`) | the honeycomb above the prompt |
+| `/panal pane` (also `panel`, `side`) | the cards in a pane |
+| `/panal off` (also `hide`, `none`) | nowhere |
+| `/panal` | toggles between off and the band |
+
+Where it shows and whether the pets are pinned open are remembered across
+sessions. `panal` must be on your `PATH`; if it is missing or too old, the
+plugin says so once and keeps retrying, waiting a little longer each time. On
+surfaces that cannot draw raster cells (the desktop app) it shows text lines
+only.
 
 ## Which mascot
 
@@ -112,6 +159,7 @@ without a terminal of its own. The fields are in the
 | `-every 2s` | `2s` (or `every` in `panal.conf`) | how often to re-read the agents |
 | `-json` | | one frame and exit |
 | `-stream` | | one frame per line until the pipe closes |
+| `-all` | | with `-json`/`-stream`: also every shown agent's own mascot, in `pets` |
 | `-cols N` · `-rows N` | the sprite's 12 × 5 | with `-json`/`-stream`: the largest raster to send (it is cropped: centered across, from the top down) |
 | `-no-animation` | | still mascot, no reactions |
 | `-theme NAME` | `auto` | `auto`, `dark`, `light` or `contrast` |

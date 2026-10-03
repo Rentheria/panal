@@ -147,6 +147,28 @@ for the terminal's default color. Code points are always `' '`, `'▀'`,
 | `'▄'` | only the bottom one | bottom | default |
 | `'▀'` | top and bottom differ | top | bottom |
 
+With `-all` the frame also has `pets`: every agent shown, in dashboard order,
+each with its own mascot and pose (only its own reactions; the main pet cheers
+for everyone):
+
+```json
+"pets": [
+  {"name": "claude", "status": "orchestrating", "glyph": "●", "color": "#42A5F5",
+   "mood": "work", "line": "claude ● orchestrating · 12 min",
+   "model": "Opus 5.5 (1M context) · medium", "task": "Fix the table",
+   "activity": "$ go test ./...", "raster": {"columns": 12, "rows": 5, "cells": "…"}}
+]
+```
+
+| field | what |
+|---|---|
+| `name`, `status`, `glyph`, `color`, `mood`, `line`, `raster` | as above, for that agent |
+| `model` | its model, if known |
+| `task` | its task, first line (at most 120 characters) |
+| `activity` | its last action, only while it works or orchestrates |
+
+Without `-all` the `pets` field is left out.
+
 The floating effects (the sleeping z, confetti, hearts, the `!`) are cells
 too; there is no text in the raster (that is `line` and `others`). The
 raster is the sprite's size, 12 × 5, unless `-cols`/`-rows` ask for less:

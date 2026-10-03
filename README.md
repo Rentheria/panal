@@ -77,6 +77,9 @@ In a terminal the cards are in color and the mascots move.</sub>
 - **One screen for every agent.** Live quotas asked of each CLI without
   spending any, run history, reports, a timeline, alerts, and what each
   run *really* changed, checked with git against the task's rules.
+- **Your agents as pets.** A honeycomb above Claude Code's prompt (or a
+  split pane next to any CLI) that opens into every agent's mascot, live.
+  [See it](#your-agents-as-pets-inside-claude-code).
 - **Read-only by design.** The only files Panal writes are its own, in
   `~/.panal`.
 
@@ -169,29 +172,43 @@ Each subcommand has its own `-h`. Details in [delegate](docs/delegate.md),
 [router](docs/router.md), [models](docs/models.md) and
 [reference](docs/reference.md).
 
-## Panal as a pet
+## Your agents as pets, inside Claude Code
 
-`panal pet` keeps one mascot next to your agent CLI in a small split pane:
-claude while it orchestrates, otherwise whichever agent is working (or
-finished last). It works, celebrates, gets scared and naps with them, with
-one status line under it.
+Keep your agents in sight while you work, without leaving Claude Code. The
+`panal-pet` plugin puts a tiny honeycomb at the right of the prompt, one cell
+per agent in its status color. Hover it (or click **Panal** to pin it) and
+every agent's mascot pops up, live: working, celebrating a finished run,
+shaking at a failure, napping when there is nothing to do.
 
-```sh
-wt -w 0 sp -V -s 0.25 panal pet        # Windows Terminal, a pane on the right
-tmux split-window -h -l 24 panal pet   # tmux
+```text
+     ▄▄▄▄▄▄           ▄▄▄▄                ▀
+    █▀████▀█         ██████  ▄       █▀▀▀▀▀▀█ ▄
+   ▄████████▄       ▄▀▀▀▀▀▀▄         ████████
+   ▀████████▀█      ▀▀█▀▀█▀▀        ▄████████▄
+    ▀ ▀  ▀ ▀         ▀▀  ▀▀          ▀▀    ▀▀
+    claude ●          agy ✔            codex ✔
+                                                              ⬢⬢⬢ Panal
+❯ _
 ```
-
-Inside **Claude Code** the pet can live above the prompt, through the
-`panal-pet` plugin in this repo:
 
 ```text
 /plugin marketplace add AlbertoVasquezR/panal
 /plugin install panal-pet@panal
 ```
 
-Then `/panal band`, `/panal pane` or `/panal off` choose where it shows.
-`panal pet -json` and `-stream` give the same pet as JSON frames for any other
-plugin or status bar. Details: [docs/pet.md](docs/pet.md).
+`/panal pane` shows a card per agent instead (mascot, status, model and what
+it is doing right now); `/panal off` hides it.
+
+Using Codex or another CLI? `panal pet` is the same pet for a small split
+pane:
+
+```sh
+wt -w 0 sp -V -s 0.25 panal pet        # Windows Terminal, a pane on the right
+tmux split-window -h -l 24 panal pet   # tmux
+```
+
+`panal pet -json` / `-stream` (add `-all` for every agent) give the frames
+as JSON for any other plugin or status bar. Details: [docs/pet.md](docs/pet.md).
 
 ## Keys
 

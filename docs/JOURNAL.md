@@ -16,6 +16,17 @@ written; the current names are in the README and `docs/`.
 
 ---
 
+## 2026-10-03: pets inside Claude Code
+
+- `panal pet`: one mascot for a split pane next to any CLI, plus `-json` /
+  `-stream` frames (contract in `docs/reference.md#pet-frames`); `-all` adds
+  every agent's own mascot with its model, task and last action.
+- `plugins/panal-pet` (the repo is now a Claude Code plugin marketplace): a
+  honeycomb at the right of the prompt that opens into every agent's mascot on
+  hover or click, or a pane with one card per agent. `/panal band|pane|off`.
+- The claude reader no longer flashes "no data" when it reads the status line
+  while Claude Code is rewriting it: one retry, then the last good read.
+
 ## 2026-10-03: `panal pet`
 
 - New subcommand `panal pet` (`internal/pet`): one mascot for a small

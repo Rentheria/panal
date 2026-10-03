@@ -1,7 +1,7 @@
 {
   "name": "panal-pet",
-  "version": "0.1.1",
-  "description": "Panal's mascot as a pet above the prompt: the agent that is orchestrating, live",
+  "version": "0.3.0",
+  "description": "Panal's pets inside Claude Code: a small honeycomb above the prompt; hover or click it to see every agent's mascot",
   "author": { "name": "AlbertoVasquezR" },
   "homepage": "https://github.com/AlbertoVasquezR/panal",
   "license": "Apache-2.0",
