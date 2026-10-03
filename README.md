@@ -181,8 +181,17 @@ wt -w 0 sp -V -s 0.25 panal pet        # Windows Terminal, a pane on the right
 tmux split-window -h -l 24 panal pet   # tmux
 ```
 
-`panal pet -json` and `-stream` give the same pet as JSON frames for a
-plugin or status bar to draw. Details: [docs/pet.md](docs/pet.md).
+Inside **Claude Code** the pet can live above the prompt, through the
+`panal-pet` plugin in this repo:
+
+```text
+/plugin marketplace add AlbertoVasquezR/panal
+/plugin install panal-pet@panal
+```
+
+Then `/panal band`, `/panal pane` or `/panal off` choose where it shows.
+`panal pet -json` and `-stream` give the same pet as JSON frames for any other
+plugin or status bar. Details: [docs/pet.md](docs/pet.md).
 
 ## Keys
 

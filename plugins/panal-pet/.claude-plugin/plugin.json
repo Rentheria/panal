@@ -1,0 +1,9 @@
+{
+  "name": "panal-pet",
+  "version": "0.1.1",
+  "description": "Panal's mascot as a pet above the prompt: the agent that is orchestrating, live",
+  "author": { "name": "AlbertoVasquezR" },
+  "homepage": "https://github.com/AlbertoVasquezR/panal",
+  "license": "Apache-2.0",
+  "types": "./types/index.d.ts"
+}

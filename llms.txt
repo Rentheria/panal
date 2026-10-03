@@ -9,7 +9,7 @@ Module `github.com/AlbertoVasquezR/panal`, Apache-2.0 license, Go 1.27+. Install
 - [README](README.md): overview, quick start, commands, keys
 - [Getting started](docs/getting-started.md): install, connecting each agent, the Claude Code status line, `panal -doctor`
 - [Dashboard](docs/dashboard.md): views, cards, every key, glyphs, mascots, live quota, alerts, themes
-- [Pet](docs/pet.md): `panal pet`, one mascot for a small split pane next to an agent CLI; `-json` / `-stream` frames for plugins
+- [Pet](docs/pet.md): `panal pet`, one mascot for a small split pane next to an agent CLI; `-json` / `-stream` frames; the `panal-pet` Claude Code plugin in `plugins/panal-pet`
 - [Delegating](docs/delegate.md): `panal delegate` flags, chain, exit codes, sandboxing per agent, files written
 - [Router](docs/router.md): tier rules, outcomes, priors and formulas, Thompson sampling, feedback, `panal route`, external router contract
 - [Models](docs/models.md): model discovery per CLI, cache, `pool = auto`, `models` / `exclude` patterns, cost heuristic

@@ -41,6 +41,29 @@ columns or 7 rows), and the lines shorten (`claude ● orchestrating · 12 min`
 → without the time → the word cut with `…`; the others without the dots,
 then the last ones give way to `…`).
 
+## Inside Claude Code: the `panal-pet` plugin
+
+The repo is also a Claude Code plugin marketplace with one plugin,
+[`plugins/panal-pet`](../plugins/panal-pet). It runs `panal pet -stream` and
+draws the latest frame inside Claude Code: the mascot as raster cells with the
+status lines beside it.
+
+```text
+/plugin marketplace add AlbertoVasquezR/panal
+/plugin install panal-pet@panal
+```
+
+| command | where the pet shows |
+|---|---|
+| `/panal band` (default) | a band above the prompt |
+| `/panal pane` | a pane beside the conversation |
+| `/panal off` | nowhere |
+
+The choice is remembered across sessions. `panal` must be on your `PATH`; if it
+is missing or too old, the plugin says so once and keeps retrying, waiting a
+little longer each time. On surfaces that cannot draw raster cells (the
+desktop app) it shows the status lines only.
+
 ## Which mascot
 
 1. `-agent NAME` (claude, agy, codex or opencode), if given;

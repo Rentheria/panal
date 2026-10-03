@@ -1,0 +1,16 @@
+{
+  "name": "panal",
+  "owner": {
+    "name": "AlbertoVasquezR"
+  },
+  "metadata": {
+    "description": "Plugins for Panal, the terminal dashboard for AI coding agents"
+  },
+  "plugins": [
+    {
+      "name": "panal-pet",
+      "source": "./plugins/panal-pet",
+      "description": "Panal's mascot as a pet inside Claude Code: the agent that is orchestrating, live above the prompt or in a pane"
+    }
+  ]
+}

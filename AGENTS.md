@@ -66,6 +66,7 @@ go install ./cmd/panal                          # installs the binary to ~/go/bi
 | `internal/alerts` | notifications, bell, ntfy, webhooks |
 | `internal/mascots`, `internal/ui` | sprites; Bubble Tea views and keys |
 | `internal/pet` | `panal pet`: the mascot for a split pane and its JSON frame contract (`docs/reference.md#pet-frames`) |
+| `plugins/panal-pet`, `.claude-plugin/marketplace.json` | the Claude Code plugin that draws `panal pet -stream` frames above the prompt (TypeScript hooks module; check with `claude plugin validate`) |
 
 ## Invariants
 
