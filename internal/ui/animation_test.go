@@ -29,7 +29,7 @@ func TestReactionOnChange(t *testing.T) {
 		{state.Done, state.Idle, 0, false},
 	}
 	for _, c := range cases {
-		m, ok := reactionForChange(c.before, c.now)
+		m, ok := ReactionForChange(c.before, c.now)
 		if ok != c.present || (ok && m != c.want) {
 			t.Errorf("%s → %s: got (%d, %v), want (%d, %v)", c.before, c.now, m, ok, c.want, c.present)
 		}

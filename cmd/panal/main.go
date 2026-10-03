@@ -27,6 +27,7 @@ import (
 	"github.com/AlbertoVasquezR/panal/internal/history"
 	"github.com/AlbertoVasquezR/panal/internal/live"
 	"github.com/AlbertoVasquezR/panal/internal/models"
+	"github.com/AlbertoVasquezR/panal/internal/pet"
 	"github.com/AlbertoVasquezR/panal/internal/readers"
 	"github.com/AlbertoVasquezR/panal/internal/remote"
 	"github.com/AlbertoVasquezR/panal/internal/report"
@@ -171,6 +172,8 @@ func main() {
 			os.Exit(delegate.ModelsMain(os.Args[2:], os.Stdout, os.Stderr))
 		case "feedback":
 			os.Exit(feedback.Main(os.Args[2:], os.Stdout, os.Stderr))
+		case "pet":
+			os.Exit(pet.Main(os.Args[2:], os.Stdout, os.Stderr))
 		}
 	}
 	every := flag.Duration("every", 2*time.Second, "how often the dashboard refreshes")
@@ -196,6 +199,7 @@ func main() {
        panal route -stats                    what the router has learned
        panal models [-refresh]               the models each agent CLI can use, and which the router may pick
        panal feedback RUN good|bad [note]    rate a run so the router learns
+       panal pet [-json|-stream]             a mascot for a small split pane (or JSON frames)
 
 Each command has its own -h.
 

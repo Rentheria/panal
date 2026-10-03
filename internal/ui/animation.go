@@ -54,16 +54,29 @@ func (a Animation) reaction(agent string) (Reaction, int, bool) {
 // the reaction if one is in progress; otherwise the status one (a nap if it has
 // been at rest for hours).
 func (a Animation) mascot(f state.Row, now time.Time) (mascots.Mode, int, mascots.Effects) {
-	fx := mascots.Effects{Sweat: highQuota(f)}
+	fx := MascotEffects(f)
 	if r, n, ok := a.reaction(f.Agent); ok {
 		return r.Mode, n, fx
 	}
+	return StatusMode(f, now), a.Frame + a.Offset, fx
+}
+
+// StatusMode is the mascot's animation for the agent's status when no
+// reaction is in progress: MascotMode, or a nap if it has been at rest for
+// hours. The dashboard and panal pet share it.
+func StatusMode(f state.Row, now time.Time) mascots.Mode {
 	mode := MascotMode(f.Status)
 	if mode == mascots.Idle && (f.Status == state.Idle || f.Status == state.Done) &&
 		!f.End.IsZero() && !now.IsZero() && now.Sub(f.End) > napAfter {
 		mode = mascots.Nap
 	}
-	return mode, a.Frame + a.Offset, fx
+	return mode
+}
+
+// MascotEffects are the status effects that are not a mode (sweating when a
+// quota or the context is above 80 %).
+func MascotEffects(f state.Row) mascots.Effects {
+	return mascots.Effects{Sweat: highQuota(f)}
 }
 
 func highQuota(f state.Row) bool {
@@ -106,8 +119,8 @@ func (a Animation) bubble(agent string) string {
 	return fs[i]
 }
 
-// reactionForChange: which reaction a change from one status to another causes.
-func reactionForChange(before, now state.Status) (mascots.Mode, bool) {
+// ReactionForChange: which reaction a change from one status to another causes.
+func ReactionForChange(before, now state.Status) (mascots.Mode, bool) {
 	works := func(e state.Status) bool { return e == state.Working || e == state.Orchestrating }
 	switch {
 	case before == now:

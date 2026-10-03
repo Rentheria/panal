@@ -16,6 +16,31 @@ written; the current names are in the README and `docs/`.
 
 ---
 
+## 2026-10-03: `panal pet`
+
+- New subcommand `panal pet` (`internal/pet`): one mascot for a small
+  split pane next to an agent CLI (`wt -w 0 sp -V -s 0.25 panal pet`,
+  `tmux split-window -h -l 24 panal pet`), plus `-json` (one frame) and
+  `-stream` (NDJSON while it changes, heartbeat every 2 s, exits when the
+  pipe closes) for a Claude Code plugin being written separately against
+  the contract in `docs/reference.md#pet-frames`. Field names are fixed;
+  bump `v` if they ever change.
+- Which agent: forced, else claude orchestrating, else the working one
+  that started last, else the latest finished. Mood comes from the
+  dashboard's mode and reaction rules; the pet also reacts to the other
+  agents' runs finishing or failing, and a run that ended < 5 s ago counts
+  as "just finished" so a single `-json` call can celebrate it.
+- Refactors, no visible change (golden screens untouched):
+  `mascots.Sprite.Cells` holds the half-block encoding and `RenderWith`
+  draws from it; `ui.StatusMode` (status mode + nap) and
+  `ui.ReactionForChange` are exported; `internal/ui/shared.go` exposes the
+  glyph, status/agent/dim colors, NO_COLOR and the disabled agents.
+- It reads only the cheap readers (`readers.All()`, no live quota, no
+  agent process). One `-json` call is ~0.3 s on Windows.
+- Pending: the pet does not read the run history, so "just finished" for
+  a status change relies on the row's `End` (the dashboard also checks the
+  last run); a `-scale` for bigger rasters if a consumer asks for one.
+
 ## 2026-10-02: Apache 2.0
 
 Relicensed from MIT to the Apache License 2.0 (explicit patent grant, no

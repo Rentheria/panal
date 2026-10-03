@@ -508,8 +508,20 @@ func init() {
 // afar that an agent is stopped.
 func (s Sprite) Render(m Mode, n int) string { return s.RenderWith(m, n, Effects{}) }
 
-// RenderWith is Render with effects.
-func (s Sprite) RenderWith(m Mode, n int, e Effects) string {
+// Cell is one character of a rendered frame: a half block (or a space) with
+// its foreground and background colors as "#rrggbb"; "" means the terminal's
+// default color (a transparent pixel).
+type Cell struct {
+	Char   rune
+	FG, BG string
+}
+
+// Cells returns frame n of the given mode as Height/2 rows of Width cells,
+// with the half-block encoding Render uses: ' ' (both pixels transparent),
+// '█' (both the same color), '▄' (only the bottom one), '▀' (only the top
+// one, or top and bottom in different colors with the bottom one as
+// background). In Sleeping and Stuck everything is gray except the points.
+func (s Sprite) Cells(m Mode, n int, e Effects) [][]Cell {
 	rows, points := s.FrameWith(m, n, e)
 	dimmed := m == Sleeping || m == Stuck
 	over := map[[2]int]string{}
@@ -532,26 +544,47 @@ func (s Sprite) RenderWith(m Mode, n int, e Effects) string {
 		}
 		return hex, true
 	}
-	var b strings.Builder
+	out := make([][]Cell, 0, len(rows)/2)
 	for y := 0; y < len(rows); y += 2 {
+		line := make([]Cell, 0, len(rows[y]))
 		for x := 0; x < len(rows[y]); x++ {
 			up, hasUp := color(y, x)
 			down, hasDown := color(y+1, x)
-			st := lipgloss.NewStyle()
 			switch {
 			case !hasUp && !hasDown:
-				b.WriteString(" ")
+				line = append(line, Cell{Char: ' '})
 			case hasUp && hasDown && up == down:
-				b.WriteString(st.Foreground(lipgloss.Color(up)).Render("█"))
+				line = append(line, Cell{Char: '█', FG: up})
 			case !hasUp:
-				b.WriteString(st.Foreground(lipgloss.Color(down)).Render("▄"))
+				line = append(line, Cell{Char: '▄', FG: down})
 			case !hasDown:
-				b.WriteString(st.Foreground(lipgloss.Color(up)).Render("▀"))
+				line = append(line, Cell{Char: '▀', FG: up})
 			default:
-				b.WriteString(st.Foreground(lipgloss.Color(up)).Background(lipgloss.Color(down)).Render("▀"))
+				line = append(line, Cell{Char: '▀', FG: up, BG: down})
 			}
 		}
-		if y+2 < len(rows) {
+		out = append(out, line)
+	}
+	return out
+}
+
+// RenderWith is Render with effects.
+func (s Sprite) RenderWith(m Mode, n int, e Effects) string {
+	var b strings.Builder
+	cells := s.Cells(m, n, e)
+	for i, line := range cells {
+		for _, c := range line {
+			if c.FG == "" && c.BG == "" {
+				b.WriteRune(c.Char)
+				continue
+			}
+			st := lipgloss.NewStyle().Foreground(lipgloss.Color(c.FG))
+			if c.BG != "" {
+				st = st.Background(lipgloss.Color(c.BG))
+			}
+			b.WriteString(st.Render(string(c.Char)))
+		}
+		if i+1 < len(cells) {
 			b.WriteString("\n")
 		}
 	}

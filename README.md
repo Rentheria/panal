@@ -161,12 +161,28 @@ formulas: [docs/router.md](docs/router.md).
 | `panal -report 7 [-format text\|md\|csv\|json]` | per-agent report of the last N days |
 | `panal -summary` · `-history` · `-once` | today as markdown · past runs · the status as text |
 | `panal -statusline` | the status on one line, for Claude Code's status line or tmux |
+| `panal pet [-agent NAME] [-json\|-stream]` | one mascot for a small split pane, or its frames as JSON for other programs |
 | `panal -serve :8765` | serve this machine's status to another dashboard |
 | `panal -preview 100 [-screen history]` · `-mascots` | draw one screen, or the mascots, and exit |
 
 Each subcommand has its own `-h`. Details in [delegate](docs/delegate.md),
 [router](docs/router.md), [models](docs/models.md) and
 [reference](docs/reference.md).
+
+## Panal as a pet
+
+`panal pet` keeps one mascot next to your agent CLI in a small split pane:
+claude while it orchestrates, otherwise whichever agent is working (or
+finished last). It works, celebrates, gets scared and naps with them, with
+one status line under it.
+
+```sh
+wt -w 0 sp -V -s 0.25 panal pet        # Windows Terminal, a pane on the right
+tmux split-window -h -l 24 panal pet   # tmux
+```
+
+`panal pet -json` and `-stream` give the same pet as JSON frames for a
+plugin or status bar to draw. Details: [docs/pet.md](docs/pet.md).
 
 ## Keys
 
@@ -213,11 +229,12 @@ Every key and variable: [docs/configuration.md](docs/configuration.md).
 |---|---|
 | [Getting started](docs/getting-started.md) | install, connecting each agent, first run, `-doctor` |
 | [Dashboard](docs/dashboard.md) | views, cards, keys, glyphs, mascots, alerts, themes |
+| [Pet](docs/pet.md) | `panal pet`: the mascot for a split pane, and its JSON frames |
 | [Delegating](docs/delegate.md) | `panal delegate`: flags, chain, exit codes, sandboxing, files |
 | [Router](docs/router.md) | tiers, outcomes, priors, Thompson sampling, feedback, external router |
 | [Models](docs/models.md) | discovery, cache, `pool = auto`, `models` / `exclude`, cost heuristic |
 | [Configuration](docs/configuration.md) | every config key and environment variable |
-| [Reference](docs/reference.md) | run file schema, reports, multiple machines, status line |
+| [Reference](docs/reference.md) | run file schema, reports, multiple machines, status line, pet frames |
 | [Architecture](docs/ARCHITECTURE.md) | packages and data flow, for contributors |
 
 ## Contributing

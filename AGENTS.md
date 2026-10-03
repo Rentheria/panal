@@ -65,6 +65,7 @@ go install ./cmd/panal                          # installs the binary to ~/go/bi
 | `internal/config` | `panal.conf`; which agents are off |
 | `internal/alerts` | notifications, bell, ntfy, webhooks |
 | `internal/mascots`, `internal/ui` | sprites; Bubble Tea views and keys |
+| `internal/pet` | `panal pet`: the mascot for a split pane and its JSON frame contract (`docs/reference.md#pet-frames`) |
 
 ## Invariants
 

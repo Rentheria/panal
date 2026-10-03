@@ -93,7 +93,67 @@ Agents that are off and idle are left out.
   [Getting started](getting-started.md#claude-code-the-orchestrator)).
 - **tmux**: `set -g status-right '#(panal -statusline)'`.
 
-## Screen previews
+## Pet frames
+
+`panal pet -json` prints one frame; `panal pet -stream` prints one per line
+(NDJSON) when something changes (at most about 4 per second) and at least
+one every 2 seconds, until its stdout closes or it gets `ctrl+c`. What the
+pet shows and when: [Panal as a pet](pet.md).
+
+```json
+{
+  "v": 1,
+  "agent": "claude",
+  "status": "orchestrating",
+  "glyph": "●",
+  "color": "#42A5F5",
+  "mood": "work",
+  "line": "claude ● orchestrating · 12 min",
+  "others": "agy ✔ · codex ◐ · opencode ○",
+  "agents": [
+    {"name": "claude", "status": "orchestrating", "glyph": "●", "color": "#42A5F5"},
+    {"name": "agy", "status": "done", "glyph": "✔", "color": "#66BB6A"},
+    {"name": "codex", "status": "out of quota", "glyph": "◐", "color": "#FFB300"},
+    {"name": "opencode", "status": "idle", "glyph": "○", "color": "#8A8A8A"}
+  ],
+  "raster": {"columns": 12, "rows": 5, "cells": "IAAAAAAAAAEAAAAB…"}
+}
+```
+
+| field | what |
+|---|---|
+| `v` | contract version, `1` |
+| `agent` | the pet's agent |
+| `status` | its status word: `no data`, `idle`, `working`, `stuck`, `out of quota`, `no permission`, `done`, `failed` or `orchestrating` |
+| `glyph` | its status glyph (see [glyphs](dashboard.md#glyphs)) |
+| `color` | its status color in the active theme, `#RRGGBB` |
+| `mood` | `work`, `celebrate`, `scared`, `sleep`, `idle` or `greet` |
+| `line` | its status line: `claude ● orchestrating · 12 min` (time working), `codex ✔ done · 3 min ago` (since its run ended), `agy ○ idle` |
+| `others` | the other agents: name and glyph, joined by ` · ` |
+| `agents` | every agent shown, the pet included, in dashboard order: `name`, `status`, `glyph`, `color` |
+| `raster` | the mascot as terminal cells (below) |
+
+`raster.cells` is standard padded base64 of `columns × rows` cells,
+row-major. Each cell is three little-endian `uint32`: the code point, the
+foreground and the background. Colors are `0x00RRGGBB`, or `0x01000000`
+for the terminal's default color. Code points are always `' '`, `'▀'`,
+`'▄'` or `'█'` (printable, one column wide, in the BMP):
+
+| cell | pixels | fg | bg |
+|---|---|---|---|
+| `' '` | both transparent | default | default |
+| `'█'` | both the same color | that color | default |
+| `'▀'` | only the top one | top | default |
+| `'▄'` | only the bottom one | bottom | default |
+| `'▀'` | top and bottom differ | top | bottom |
+
+The floating effects (the sleeping z, confetti, hearts, the `!`) are cells
+too; there is no text in the raster (that is `line` and `others`). The
+raster is the sprite's size, 12 × 5, unless `-cols`/`-rows` ask for less:
+then it is cropped, centered across and from the top down. Its size never
+changes between frames.
+
+
 
 `panal -preview WIDTH [-screen NAME]` draws one screen once, at that
 width and 40 lines, and exits. `NAME` is one of `table`, `detail`,

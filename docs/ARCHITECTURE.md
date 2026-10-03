@@ -63,7 +63,7 @@ flowchart TB
 
 | package | owns |
 |---|---|
-| `cmd/panal` | flags, subcommand dispatch (`delegate`, `route`, `models`, `feedback`), wiring config to the UI |
+| `cmd/panal` | flags, subcommand dispatch (`delegate`, `route`, `models`, `feedback`, `pet`), wiring config to the UI |
 | `cmd/preview` | renders every mascot frame to a PNG (`docs/animations.png`) |
 | `internal/state` | the shared model: `Row`, `Status`, `Quota`, `Bar` |
 | `internal/readers` | one reader per agent (claude, agy, codex, opencode) plus delegated runs; `Sources` for `-doctor` |
@@ -82,8 +82,9 @@ flowchart TB
 | `internal/remote` | `-serve` and reading other machines |
 | `internal/config` | `panal.conf`, which agents are off |
 | `internal/alerts` | Windows notifications, the bell, ntfy and webhooks |
-| `internal/mascots` | sprites and animations |
+| `internal/mascots` | sprites and animations; `Cells` is the half-block encoding the dashboard and the pet share |
 | `internal/ui` | Bubble Tea model, views, keys, palette; draws only what the others provide |
+| `internal/pet` | `panal pet`: picks the agent and mood (reusing `ui.StatusMode`, `ui.ReactionForChange`), its small Bubble Tea view, the `-json`/`-stream` frames |
 
 ## Key types
 

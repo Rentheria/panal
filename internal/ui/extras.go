@@ -87,7 +87,7 @@ func (m *Model) detectAlerts() []alert {
 		before, seen := m.statuses[f.Agent]
 		m.statuses[f.Agent] = f.Status
 		if !first && seen {
-			if r, ok := reactionForChange(before, f.Status); ok && (r == mascots.WakeUp || m.justFinished(f.Agent, before)) {
+			if r, ok := ReactionForChange(before, f.Status); ok && (r == mascots.WakeUp || m.justFinished(f.Agent, before)) {
 				m.react(f.Agent, r)
 				m.noteUnseen(f.Agent, r)
 				mascotChanges = append(mascotChanges, mascotChange{f.Agent, r})

@@ -211,6 +211,9 @@ The sprites live in `internal/mascots` (each letter is a palette pixel,
 `go run ./cmd/preview docs/animations.png`, or draw them in the terminal
 with `panal -mascots`.
 
+To keep one mascot next to an agent CLI in a small split pane, or to draw
+it from another program, see [Panal as a pet](pet.md).
+
 ## Live quota
 
 Each agent reports its quota only when it runs, so while the dashboard is
