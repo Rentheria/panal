@@ -2,6 +2,7 @@ package pet
 
 import (
 	"bufio"
+	"bytes"
 	"context"
 	"encoding/json"
 	"flag"
@@ -525,5 +526,27 @@ func TestHex(t *testing.T) {
 	defer lipgloss.SetHasDarkBackground(true)
 	if got := Hex(lipgloss.AdaptiveColor{Light: "240", Dark: "245"}); got != "#585858" {
 		t.Errorf("light theme: %s", got)
+	}
+}
+
+// With All, every shown agent gets its own mascot, in reader order, and
+// without it the field is left out of the JSON entirely.
+func TestFramePetsWithAll(t *testing.T) {
+	now := time.Date(2026, 10, 3, 12, 0, 0, 0, time.UTC)
+	rows := []state.Row{
+		{Agent: "claude", Status: state.Orchestrating},
+		{Agent: "codex", Status: state.Done, End: now.Add(-2 * time.Second)},
+	}
+	f := New(Options{All: true, NoAnimation: true}).Frame(rows, now)
+	if len(f.Pets) != 2 || f.Pets[0].Name != "claude" || f.Pets[1].Name != "codex" {
+		t.Fatalf("pets: %+v", f.Pets)
+	}
+	for _, pi := range f.Pets {
+		if _, err := DecodeRaster(pi.Raster); err != nil || pi.Raster.Columns == 0 {
+			t.Errorf("%s raster: %v %+v", pi.Name, err, pi.Raster)
+		}
+	}
+	if b := Encode(New(Options{NoAnimation: true}).Frame(rows, now)); bytes.Contains(b, []byte(`"pets"`)) {
+		t.Errorf("without All there must be no pets field: %s", b)
 	}
 }

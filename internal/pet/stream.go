@@ -107,6 +107,7 @@ func Main(args []string, stdout, stderr io.Writer) int {
 	theme := fs.String("theme", os.Getenv("PANAL_THEME"), "colors: auto, dark, light or contrast (or PANAL_THEME)")
 	cols := fs.Int("cols", 0, "with -json/-stream: at most this many raster columns (default: the sprite's 12)")
 	rows := fs.Int("rows", 0, "with -json/-stream: at most this many raster rows (default: the sprite's 5)")
+	all := fs.Bool("all", false, "with -json/-stream: also every shown agent's own mascot, in \"pets\"")
 	fs.Usage = func() {
 		fmt.Fprint(stderr, `Usage: panal pet [flags]          a mascot to keep in a small split pane (q quits)
        panal pet -json [flags]    one JSON frame, for other programs
@@ -159,7 +160,7 @@ Flags:
 		return 2
 	}
 	ui.Conf = &config.Resolver{Path: config.Path()}
-	opts := Options{Agent: *agent, Cols: *cols, Rows: *rows, NoAnimation: *noAnim}
+	opts := Options{Agent: *agent, Cols: *cols, Rows: *rows, NoAnimation: *noAnim, All: *all}
 	ls := readers.All()
 
 	switch {

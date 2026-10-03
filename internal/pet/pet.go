@@ -64,6 +64,7 @@ type Options struct {
 	Agent       string // forced pet agent; "" = chosen by SelectAgent
 	Cols, Rows  int    // maximum raster size in cells; 0 = the sprite's
 	NoAnimation bool   // still frame, no reactions
+	All         bool   // also every shown agent's own mascot in Frame.Pets
 }
 
 // reaction is a short animation that started at a moment.
@@ -243,6 +244,17 @@ type AgentInfo struct {
 	Color  string `json:"color"`
 }
 
+// PetInfo is one agent's own mascot, in the frame's "pets" list (-all).
+type PetInfo struct {
+	Name   string `json:"name"`
+	Status string `json:"status"`
+	Glyph  string `json:"glyph"`
+	Color  string `json:"color"`
+	Mood   string `json:"mood"`
+	Line   string `json:"line"`
+	Raster Raster `json:"raster"`
+}
+
 // Raster is the mascot as cells; see EncodeCells.
 type Raster struct {
 	Columns int    `json:"columns"`
@@ -263,6 +275,7 @@ type Frame struct {
 	Others string      `json:"others"`
 	Agents []AgentInfo `json:"agents"`
 	Raster Raster      `json:"raster"`
+	Pets   []PetInfo   `json:"pets,omitempty"` // with Options.All: every shown agent
 
 	row    state.Row
 	suffix string // "· 12 min", the status line's time
@@ -321,7 +334,43 @@ func (p *Pet) Frame(rows []state.Row, now time.Time) Frame {
 		f.cells = crop(s.Cells(mode, n, ui.MascotEffects(row)), p.opts.Cols, p.opts.Rows)
 	}
 	f.Raster = EncodeRaster(f.cells)
+	if p.opts.All {
+		for _, o := range vis {
+			f.Pets = append(f.Pets, p.own(o, now))
+		}
+	}
 	return f
+}
+
+// own is one agent's mascot as itself: its status pose and only its own
+// reactions (the pet in Frame cheers for everyone; these do not).
+func (p *Pet) own(o state.Row, now time.Time) PetInfo {
+	mode, n := ui.StatusMode(o, now), 0
+	if !p.opts.NoAnimation {
+		n = int(now.UnixMilli() / FrameEvery.Milliseconds())
+		if r, ok := p.active(o.Agent, now); ok {
+			mode, n = r.mode, int(now.Sub(r.at)/FrameEvery)
+		} else if !o.End.IsZero() && !now.Before(o.End) && now.Sub(o.End) < JustNow {
+			switch o.Status {
+			case state.Done:
+				mode, n = mascots.Celebrate, int(now.Sub(o.End)/FrameEvery)
+			case state.Failed:
+				mode, n = mascots.Scared, int(now.Sub(o.End)/FrameEvery)
+			}
+		}
+	}
+	pi := PetInfo{
+		Name:   o.Agent,
+		Status: o.Status.String(),
+		Glyph:  ui.Icon(o.Status),
+		Color:  Hex(ui.StatusColor(o.Status)),
+		Mood:   MoodOf(mode),
+		Line:   Line(o, now),
+	}
+	if s, ok := mascots.All[o.Agent]; ok {
+		pi.Raster = EncodeRaster(crop(s.Cells(mode, n, ui.MascotEffects(o)), p.opts.Cols, p.opts.Rows))
+	}
+	return pi
 }
 
 // Line: "claude ● orchestrating · 12 min" while it works (time since it
