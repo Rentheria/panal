@@ -355,3 +355,31 @@ func TestClaude_EnvVarAndDefaultPath(t *testing.T) {
 		t.Fatalf("expected the new path %q, got %q", want, c.Path)
 	}
 }
+
+// A read that lands while Claude Code is rewriting the status line (the file
+// is half-written) keeps the last good read instead of flashing "no data".
+func TestClaudeHalfWrittenFileKeepsLastGood(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "statusline.json")
+	good := `{"session_id":"s","model":{"display_name":"Opus"},"workspace":{"current_dir":"/w"}}`
+	if err := os.WriteFile(path, []byte(good), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	c := &Claude{Path: path}
+	if r := c.Read(); r.Status != state.Orchestrating {
+		t.Fatalf("first read: %v (%s)", r.Status, r.Error)
+	}
+	if err := os.WriteFile(path, []byte(`{"session_id":"s","mod`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if r := c.Read(); r.Status != state.Orchestrating || r.Error != "" {
+		t.Fatalf("half-written: %v (%s), want the last good read", r.Status, r.Error)
+	}
+	// Once it is whole again it is read again (the error was not cached).
+	if err := os.WriteFile(path, []byte(good), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if r := c.Read(); r.Status != state.Orchestrating {
+		t.Fatalf("whole again: %v", r.Status)
+	}
+}

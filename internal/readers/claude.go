@@ -26,6 +26,7 @@ type Claude struct {
 	cacheModTime time.Time
 	cacheSize    int64
 	cacheData    *claudeStatuslineJSON
+	lastGood     *claudeStatuslineJSON // last file that parsed, for reads that land mid-write
 	cacheErr     error
 	cacheOk      bool
 }
@@ -156,7 +157,29 @@ func (c *Claude) readStatusLine() state.Row {
 	} else {
 		c.FileReads++
 		b, readErr := os.ReadFile(c.Path)
-		if readErr != nil {
+		var parsed claudeStatuslineJSON
+		parseErr := readErr
+		if readErr == nil {
+			parseErr = json.Unmarshal(b, &parsed)
+		}
+		// Claude Code rewrites the file on every status-line refresh, so a
+		// read can land in the middle of a write: try once more, and if it is
+		// still half-written keep the last good read (without caching the
+		// error, so the next refresh reads it again).
+		if parseErr != nil {
+			time.Sleep(30 * time.Millisecond)
+			c.FileReads++
+			if b, readErr = os.ReadFile(c.Path); readErr == nil {
+				parsed = claudeStatuslineJSON{}
+				parseErr = json.Unmarshal(b, &parsed)
+			} else {
+				parseErr = readErr
+			}
+		}
+		if parseErr != nil && c.lastGood != nil {
+			c.cacheOk = false
+			data = c.lastGood
+		} else if readErr != nil {
 			c.cacheOk = true
 			c.cacheModTime = info.ModTime()
 			c.cacheSize = info.Size()
@@ -164,10 +187,7 @@ func (c *Claude) readStatusLine() state.Row {
 			c.cacheData = nil
 			row.Error = readErr.Error()
 			return row
-		}
-
-		var parsed claudeStatuslineJSON
-		if parseErr := json.Unmarshal(b, &parsed); parseErr != nil {
+		} else if parseErr != nil {
 			c.cacheOk = true
 			c.cacheModTime = info.ModTime()
 			c.cacheSize = info.Size()
@@ -175,14 +195,15 @@ func (c *Claude) readStatusLine() state.Row {
 			c.cacheData = nil
 			row.Error = parseErr.Error()
 			return row
+		} else {
+			data = &parsed
+			c.lastGood = data
+			c.cacheOk = true
+			c.cacheModTime = info.ModTime()
+			c.cacheSize = info.Size()
+			c.cacheErr = nil
+			c.cacheData = data
 		}
-
-		data = &parsed
-		c.cacheOk = true
-		c.cacheModTime = info.ModTime()
-		c.cacheSize = info.Size()
-		c.cacheErr = nil
-		c.cacheData = data
 	}
 
 	age := now.Sub(info.ModTime())
