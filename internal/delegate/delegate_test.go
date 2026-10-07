@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"slices"
 	"strings"
 	"testing"
@@ -386,7 +387,7 @@ func TestReadOnlyArgs(t *testing.T) {
 		"codex":    {"-s", "read-only"},
 		"agy":      {"--mode", "plan", "--sandbox"},
 		"opencode": {"--agent", "plan"},
-		"cursor":   {"--auto-review", "--sandbox", "enabled"},
+		"cursor":   cursorReadOnlyFlags(runtime.GOOS),
 	}
 	for cli, want := range cases {
 		a.Link.CLI = cli
@@ -400,6 +401,40 @@ func TestReadOnlyArgs(t *testing.T) {
 				t.Errorf("%s read-only args contain %s", cli, w)
 			}
 		}
+	}
+}
+
+func TestCursorReadOnlyFlags(t *testing.T) {
+	cases := []struct {
+		goos string
+		want []string
+	}{
+		{"linux", []string{"--auto-review", "--sandbox", "enabled"}},
+		{"darwin", []string{"--auto-review", "--sandbox", "enabled"}},
+		{"windows", []string{"--auto-review"}},
+		{"js", []string{"--auto-review"}},
+	}
+	for _, c := range cases {
+		got := cursorReadOnlyFlags(c.goos)
+		if !slices.Equal(got, c.want) {
+			t.Errorf("%s: %q, want %q", c.goos, got, c.want)
+		}
+		if slices.Contains(got, "--force") {
+			t.Errorf("%s: write flag in read-only args: %q", c.goos, got)
+		}
+	}
+}
+
+func TestPermissionHint(t *testing.T) {
+	msg := "Error: Sandbox mode is enabled but not available on this system. Sandbox requires macOS or Linux."
+	if h := permissionHint("cursor", msg); !strings.Contains(h, "Windows") || !strings.Contains(h, "--auto-review") {
+		t.Errorf("hint: %q", h)
+	}
+	if h := permissionHint("cursor", "Untrusted workspace. Pass --trust"); h != "" {
+		t.Errorf("no hint for trust: %q", h)
+	}
+	if h := permissionHint("agy", msg); h != "" {
+		t.Errorf("agy should not get the cursor hint: %q", h)
 	}
 }
 

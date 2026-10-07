@@ -77,7 +77,7 @@ not `done`.
 | codex | `codex exec --json -o <log>.last -C DIR -s workspace-write [-m model] [-c model_reasoning_effort="…"] -` (task on stdin) | same with `-s read-only` |
 | agy | `agy -p <task> --log-file <log>.log [--model …] [--effort …] --dangerously-skip-permissions` | `--mode plan --sandbox` instead |
 | opencode | `opencode run [--model provider/model[#effort]] --auto <task>` | `--agent plan` instead of `--auto` |
-| cursor | `cursor-agent -p --output-format stream-json --trust --workspace DIR [--model …] --force <task>` (binary: `cursor-agent` or `agent`) | `--auto-review --sandbox enabled` instead of `--force` |
+| cursor | `cursor-agent -p --output-format stream-json --trust --workspace DIR [--model …] --force <task>` (binary: `cursor-agent` or `agent`) | `--auto-review` instead of `--force`; `--sandbox enabled` only on macOS/Linux |
 
 > **agy runs with `--dangerously-skip-permissions` when it may write.** It
 > never asks before acting and is **not confined to `-d`**: it can edit
@@ -89,9 +89,10 @@ not `done`.
 > **cursor-agent runs with `--force` when it may write.** It does not
 > ask before acting and is **not confined to `-d`**: `--workspace` only
 > names the project and skips the trust prompt. If that is too much for
-> a task, use `-r` (`--auto-review` plus the CLI sandbox) or leave
-> cursor out of the chain. `--mode plan` is not used for `-r`: it
-> rejects even a harmless read-only shell command.
+> a task, use `-r` (`--auto-review`, plus `--sandbox enabled` on macOS
+> and Linux) or leave cursor out of the chain. On Windows the CLI has
+> no sandbox, so `-r` is `--auto-review` alone. `--mode plan` is not
+> used for `-r`: it rejects even a harmless read-only shell command.
 
 codex's writes stay inside `-d` (its own `workspace-write` sandbox).
 opencode's `--auto` approves whatever is not explicitly denied. Long tasks

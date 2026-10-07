@@ -263,14 +263,33 @@ func (r *Runner) execute(path string, inv invocation, a attempt, timeout time.Du
 	if status != "" {
 		return status, rc
 	}
-	status = classify(a.Link.CLI, rc, errText.String()+"\n"+outText.String())
+	text := errText.String() + "\n" + outText.String()
+	status = classify(a.Link.CLI, rc, text)
 	switch status {
 	case runs.OutOfQuota:
 		rc = runs.ExitOutOfQuota
 	case runs.NoPermission:
 		rc = runs.ExitNoPermission
+		if hint := permissionHint(a.Link.CLI, text); hint != "" {
+			fmt.Fprintln(r.Stderr, "panal:", hint)
+			fmt.Fprintln(log, "panal:", hint)
+		}
 	}
 	return status, rc
+}
+
+// permissionHint is a short extra line when classify's status is not
+// enough to say what to do. Empty if there is nothing useful to add.
+func permissionHint(cli, text string) string {
+	if cli == "cursor" && cursorSandboxUnavailable(text) {
+		return "cursor-agent --sandbox is only available on macOS and Linux; on Windows, panal -r passes --auto-review alone"
+	}
+	return ""
+}
+
+func cursorSandboxUnavailable(text string) bool {
+	low := strings.ToLower(text)
+	return strings.Contains(low, "sandbox") && strings.Contains(low, "not available")
 }
 
 func exitCode(cmd *exec.Cmd, err error) int {

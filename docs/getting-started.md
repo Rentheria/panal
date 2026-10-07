@@ -109,12 +109,15 @@ so headless does not stall on the trust prompt):
 cursor-agent -p --output-format stream-json --trust --workspace DIR
              [--model MODEL] --force   # may write; not confined to DIR
 cursor-agent -p --output-format stream-json --trust --workspace DIR
-             [--model MODEL] --auto-review --sandbox enabled   # -r
+             [--model MODEL] --auto-review [--sandbox enabled]   # -r
 ```
 
 `--mode plan` is not used for `-r`: it rejects even a harmless
 read-only command. `--auto-review` lets the server classifier run safe
-reads and commands and deny the rest.
+reads and commands and deny the rest. `--sandbox enabled` is passed only
+on macOS and Linux. On Windows the CLI has no sandbox (`Sandbox mode is
+enabled but not available on this system`); `-r` is `--auto-review`
+alone, which still reads files and runs safe commands.
 
 A chain link is `cursor:<model>[:effort]`. Effort is not a separate flag:
 it is passed as `--model model[effort=…]` when the model id has no

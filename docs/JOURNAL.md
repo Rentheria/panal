@@ -27,12 +27,14 @@ written; the current names are in the README and `docs/`.
 - `panal delegate` runs
   `cursor-agent -p --output-format stream-json --trust --workspace DIR`
   with `--force` (writes; not confined to `-d`) or
-  `--auto-review --sandbox enabled` (`-r`). `--mode plan` is too
-  restrictive for investigation (it rejects `hostname`). Effort becomes
-  `--model id[effort=…]`. Chain name is `cursor`.
-- Models: `cursor-agent models`, fallback `--list-models`. Parser accepts
-  id-per-line (optional tab + name) and JSON. Testdata slugs are from the
-  public catalog; a live listing was not captured here.
+  `--auto-review` (`-r`; `--sandbox enabled` only on macOS/Linux — the
+  CLI refuses sandbox on Windows). `--mode plan` is too restrictive
+  (it rejects `hostname`). Effort becomes `--model id[effort=…]`.
+  Chain name is `cursor`.
+- Models: `cursor-agent models`, fallback `--list-models`. Parser
+  accepts the live Windows listing (`id - Display name`, header,
+  annotations, ANSI, CRLF), id-per-line (optional tab + name), and JSON.
+  On Windows the `.cmd` shim is run through `cmd.exe /c`.
 - Dashboard: cyan `#38BDF8` diamond mascot; fifth card after opencode.
   Five cards use 3-across before 2-across so they don't stack 2+2+1 at
   100/132 columns. Four-card layout is unchanged.
@@ -46,8 +48,10 @@ written; the current names are in the README and `docs/`.
 Verified on a Windows box with cursor-agent logged in: `-p` /
 `--print`, `--output-format`, `--auto-review`, `--force`/`--yolo`,
 `--sandbox`, `--trust`, `--workspace`, `--model`, `--list-models`,
-`status`. `--mode plan` rejected a harmless `hostname`. Not verified
-here: the exact `models` listing layout and quota-refusal wording.
+`status`. `--mode plan` rejected a harmless `hostname`. `--sandbox
+enabled` on Windows exits 1 (`Sandbox mode is enabled but not
+available`). Live `cursor-agent models` is `id - Display name`.
+Not verified here: quota-refusal wording.
 
 ## 2026-10-03: pets inside Claude Code
 

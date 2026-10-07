@@ -44,6 +44,7 @@ func TestClassify(t *testing.T) {
 		{"cursor", 1, "Untrusted workspace. Pass --trust to continue.", runs.NoPermission},
 		{"cursor", 1, "headless mode is disabled for this team", runs.NoPermission},
 		{"cursor", 1, "Not logged in. Run agent login.", runs.NoPermission},
+		{"cursor", 1, "Error: Sandbox mode is enabled but not available on this system. Sandbox requires macOS or Linux.\nRun 'agent sandbox disable' to switch to allowlist mode.", runs.NoPermission},
 		{"cursor", 0, "I added handling for the case where the API says rate limit exceeded (429)", runs.Done},
 		{"cursor", 1, "TypeError: cannot read property", runs.Failed},
 		// numbers that merely contain 429 are not quota

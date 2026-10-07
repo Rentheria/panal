@@ -8,6 +8,9 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
+	"regexp"
+	"runtime"
 	"strings"
 	"sync"
 	"time"
@@ -24,9 +27,11 @@ import (
 //	opencode  opencode api model.list GET /api/model on opencode's own server,
 //	                                  through its CLI (it brings its own auth)
 //	          opencode models         fallback: "provider/model" per line
-//	cursor    cursor-agent models     one id per line, optional tab + display
-//	          cursor-agent --list-models  same listing; the binary is
-//	                                  cursor-agent or the agent alias
+//	cursor    cursor-agent models     "id - Display name" per line (Windows
+//	                                  listing), or id per line with optional
+//	                                  tab / two spaces + name; JSON too
+//	          cursor-agent --list-models  the same listing; the binary is
+//	                                  cursor-agent, agent, or a .cmd shim
 //
 // opencode 2.0's `opencode models` prints nothing at all (its provider list
 // comes back empty even when models are configured), whether or not stdout
@@ -56,6 +61,12 @@ func Exec(ctx context.Context, name string, args ...string) ([]byte, error) {
 		if p, err := config.LookPath(name); err == nil {
 			name = p
 		}
+	}
+	// cursor-agent on Windows is a .cmd shim; Go 1.19+ can run those, and
+	// we also route them through cmd.exe /c so stdout is captured the same
+	// way as a terminal `cursor-agent models`.
+	if runtime.GOOS == "windows" {
+		name, args = windowsCmd(name, args)
 	}
 	cmd := exec.CommandContext(ctx, name, args...)
 	if h, err := os.UserHomeDir(); err == nil {
@@ -94,6 +105,16 @@ func (l *limited) Write(p []byte) (int, error) {
 		}
 	}
 	return len(p), nil
+}
+
+// windowsCmd runs a .cmd / .bat shim through cmd.exe /c so model listing
+// from %LOCALAPPDATA%\cursor-agent\cursor-agent.cmd captures stdout.
+func windowsCmd(name string, args []string) (string, []string) {
+	switch strings.ToLower(filepath.Ext(name)) {
+	case ".cmd", ".bat":
+		return "cmd.exe", append([]string{"/c", name}, args...)
+	}
+	return name, args
 }
 
 func firstLine(s string) string {
@@ -391,11 +412,26 @@ func ParseOpencodeList(b []byte) ([]Model, error) {
 	return out, s.Err()
 }
 
+// ansiCSI strips ECMA-48 / ANSI color and cursor codes. cursor-agent's
+// models listing on Windows may color the header and ids.
+var ansiCSI = regexp.MustCompile(`\x1b\[[0-9;?]*[ -/]*[@-~]|\x1b\][^\x07\x1b]*(?:\x07|\x1b\\)`)
+
+func stripANSI(s string) string { return ansiCSI.ReplaceAllString(s, "") }
+
 // ParseCursor reads `cursor-agent models` or `cursor-agent --list-models`.
-// The CLI prints one model id per line, optionally with a tab (or two or
-// more spaces) and a display name. A JSON array of ids or of {id,name}
-// objects is accepted too. Headers and decorative lines are skipped.
+// Live Windows output is:
+//
+//	Available models
+//
+//	auto - Auto (current, default)
+//	gpt-5.3-codex-low - Codex 5.3 Low
+//
+// with optional ANSI codes and CRLF. Older listings (id per line, optional
+// tab or two spaces + display name) and a JSON array / {models:[{id,name}]}
+// are still accepted. Headers, blank lines and trailing "(current, default)"
+// annotations are skipped.
 func ParseCursor(b []byte) ([]Model, error) {
+	b = []byte(stripANSI(string(bytes.ReplaceAll(b, []byte("\r\n"), []byte("\n")))))
 	if ms, err := parseCursorJSON(b); err == nil && len(ms) > 0 {
 		return ms, nil
 	}
@@ -403,31 +439,58 @@ func ParseCursor(b []byte) ([]Model, error) {
 	seen := map[string]bool{}
 	s := bufio.NewScanner(bytes.NewReader(b))
 	for s.Scan() {
-		l := strings.TrimRight(s.Text(), "\r")
-		l = strings.TrimSpace(l)
+		l := strings.TrimSpace(strings.TrimRight(s.Text(), "\r"))
 		if l == "" || strings.HasPrefix(l, "#") {
 			continue
 		}
 		low := strings.ToLower(l)
-		if strings.HasPrefix(low, "available") || strings.HasPrefix(low, "model") && !strings.Contains(l, "-") {
+		if cursorListingHeader(low) {
 			continue
 		}
-		id, name, _ := strings.Cut(l, "\t")
-		if !strings.Contains(l, "\t") {
-			if i := strings.Index(l, "  "); i > 0 {
-				id, name = l[:i], strings.TrimSpace(l[i:])
-			} else {
-				id, name = l, ""
-			}
-		}
+		id, name := splitCursorModelLine(l)
 		id = strings.TrimSpace(id)
 		if !cursorModelID(id) || seen[id] {
 			continue
 		}
 		seen[id] = true
-		out = append(out, Model{ID: id, Name: strings.TrimSpace(name)})
+		out = append(out, Model{ID: id, Name: cursorModelName(name)})
 	}
 	return out, s.Err()
+}
+
+func cursorListingHeader(low string) bool {
+	switch {
+	case strings.HasPrefix(low, "available model"):
+		return true
+	case low == "available models", low == "models":
+		return true
+	case strings.HasPrefix(low, "model") && !strings.Contains(low, "-"):
+		return true
+	}
+	return false
+}
+
+// splitCursorModelLine: "id - Name", then tab, then two-or-more spaces,
+// else the whole line is the id.
+func splitCursorModelLine(l string) (id, name string) {
+	if id, name, ok := strings.Cut(l, "\t"); ok {
+		return id, name
+	}
+	if i := strings.Index(l, " - "); i > 0 {
+		return l[:i], l[i+3:]
+	}
+	if i := strings.Index(l, "  "); i > 0 {
+		return l[:i], strings.TrimSpace(l[i:])
+	}
+	return l, ""
+}
+
+func cursorModelName(name string) string {
+	name = strings.TrimSpace(name)
+	if i := strings.LastIndex(name, " ("); i > 0 && strings.HasSuffix(name, ")") {
+		return strings.TrimSpace(name[:i])
+	}
+	return name
 }
 
 func parseCursorJSON(b []byte) ([]Model, error) {

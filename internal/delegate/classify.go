@@ -81,6 +81,7 @@ var quotaPatterns = map[string][]pattern{
 		p(runs.NoPermission, false, `untrusted workspace|trust the workspace|pass --trust`),
 		p(runs.NoPermission, false, `headless mode.{0,40}(disabled|blocked|not allowed)`),
 		p(runs.NoPermission, false, `not (logged in|authenticated)|please (log in|login)|authentication required`),
+		p(runs.NoPermission, false, `sandbox mode is enabled but not available|sandbox requires macos or linux`),
 	},
 }
 

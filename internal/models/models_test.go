@@ -1,6 +1,7 @@
 package models
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"math/rand/v2"
@@ -23,9 +24,9 @@ import (
 //	                              each) dropped
 //	opencode-api-model-list.json  opencode api model.list, with the
 //	                              directory it reports replaced
-//	cursor-models.txt             cursor-agent models: public model slugs
-//	                              as one id<TAB>name per line (the CLI was
-//	                              not available to capture a live listing)
+//	cursor-models.txt             reconstructed id<TAB>name listing
+//	cursor-models-listed.txt      live Windows `cursor-agent models`
+//	                              ("id - Display name", header, annotation)
 //
 // They only hold catalogs: ids, names, efforts, prices.
 
@@ -162,6 +163,54 @@ func TestParseCursor(t *testing.T) {
 	}
 	if ms, _ := ParseCursor([]byte("Available models\n\n")); len(ms) != 0 {
 		t.Errorf("headers only: %+v", ms)
+	}
+}
+
+func TestParseCursorWindowsListing(t *testing.T) {
+	// The live `cursor-agent models` listing: header, blank line, "id - Name"
+	// with a "(current, default)" annotation, CRLF, and ANSI on the header
+	// and the first id. Repo testdata is LF (eol=lf); we rebuild the bytes
+	// Windows actually prints.
+	plain := sample(t, "cursor-models-listed.txt")
+	var win []byte
+	win = append(win, []byte("\x1b[1m")...)
+	for i, line := range bytes.Split(plain, []byte("\n")) {
+		if i == 2 && bytes.HasPrefix(line, []byte("auto")) {
+			line = append(append([]byte("\x1b[32m"), line[:4]...), append([]byte("\x1b[0m"), line[4:]...)...)
+		}
+		win = append(win, line...)
+		win = append(win, '\r', '\n')
+	}
+	ms, err := ParseCursor(win)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := []struct{ id, name string }{
+		{"auto", "Auto"},
+		{"gpt-5.3-codex-low", "Codex 5.3 Low"},
+		{"gpt-5.3-codex-low-fast", "Codex 5.3 Low Fast"},
+		{"gpt-5.3-codex", "Codex 5.3"},
+		{"gpt-5.3-codex-fast", "Codex 5.3 Fast"},
+		{"gpt-5.3-codex-high", "Codex 5.3 High"},
+	}
+	if len(ms) != len(want) {
+		t.Fatalf("%d models: %+v", len(ms), ms)
+	}
+	for i, w := range want {
+		if ms[i].ID != w.id || ms[i].Name != w.name {
+			t.Errorf("%d: %+v, want %s / %s", i, ms[i], w.id, w.name)
+		}
+	}
+}
+
+func TestWindowsCmdShim(t *testing.T) {
+	name, args := windowsCmd(`C:\Users\me\AppData\Local\cursor-agent\cursor-agent.cmd`, []string{"models"})
+	if name != "cmd.exe" || len(args) != 3 || args[0] != "/c" || args[2] != "models" {
+		t.Errorf("cmd shim: %q %q", name, args)
+	}
+	name, args = windowsCmd("cursor-agent", []string{"models"})
+	if name != "cursor-agent" || len(args) != 1 || args[0] != "models" {
+		t.Errorf("plain binary: %q %q", name, args)
 	}
 }
 

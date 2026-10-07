@@ -2,6 +2,7 @@ package delegate
 
 import (
 	"fmt"
+	"runtime"
 	"strings"
 )
 
@@ -145,15 +146,16 @@ func opencodeArgs(a attempt) invocation {
 // --workspace are always set so headless does not stall on the workspace
 // trust prompt. Writes: --force (also spelled --yolo on the CLI); that
 // is not confined to -d. Read-only: --auto-review lets the server
-// classifier run safe reads and commands and deny the rest; --sandbox
-// enabled adds the CLI sandbox. --mode plan is not used for -r: it
-// rejects even harmless shell commands. Effort is not a separate flag:
-// it is folded into --model as model[effort=…] when the model id does
-// not already have brackets.
+// classifier run safe reads and commands and deny the rest. --sandbox
+// enabled is only passed on macOS and Linux: the CLI refuses it on
+// Windows ("Sandbox mode is enabled but not available on this system").
+// --mode plan is not used for -r: it rejects even harmless shell
+// commands. Effort is not a separate flag: it is folded into --model as
+// model[effort=…] when the model id does not already have brackets.
 //
 //	cursor-agent -p --output-format stream-json --trust --workspace <dir>
 //	             [--model <model> | --model <model>[effort=<effort>]]
-//	             --force | --auto-review --sandbox enabled
+//	             --force | --auto-review [--sandbox enabled]
 //	             (<task> | a pointer at the task file)
 func cursorArgs(a attempt) invocation {
 	args := []string{"-p", "--output-format", "stream-json", "--trust", "--workspace", a.Dir}
@@ -165,7 +167,7 @@ func cursorArgs(a attempt) invocation {
 		args = append(args, "--model", m)
 	}
 	if a.ReadOnly {
-		args = append(args, "--auto-review", "--sandbox", "enabled")
+		args = append(args, cursorReadOnlyFlags(runtime.GOOS)...)
 	} else {
 		args = append(args, "--force")
 	}
@@ -184,6 +186,16 @@ func cursorArgs(a attempt) invocation {
 
 func fileTaskPrompt(path string) string {
 	return "Your task is in the file " + path + ". Read it and do what it says."
+}
+
+// cursorReadOnlyFlags: --auto-review on every OS; --sandbox enabled only
+// where the CLI's sandbox exists (linux, darwin).
+func cursorReadOnlyFlags(goos string) []string {
+	args := []string{"--auto-review"}
+	if goos == "linux" || goos == "darwin" {
+		args = append(args, "--sandbox", "enabled")
+	}
+	return args
 }
 
 // shellSafe: s can go through cmd.exe as one quoted argument unchanged.
