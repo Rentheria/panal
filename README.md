@@ -156,7 +156,7 @@ formulas: [docs/router.md](docs/router.md).
 |---|---|
 | `panal` | the dashboard (`-every 5s`, `-theme`, `-off`, `-alerts`, `-no-animation`) |
 | `panal -doctor` | which sources were found, what was read, what to configure |
-| `panal delegate -d DIR [-r] [-t 15m] [-c CHAIN\|auto] "task"` | hand a task to codex, agy or opencode, with quota fallback |
+| `panal delegate -d DIR [-r] [-t 15m] [-c CHAIN\|auto] "task"` | hand a task to codex, agy, opencode or cursor, with quota fallback |
 | `panal route [-r] [-p POOL] "task"` | what `-c auto` would pick and why, without running anything |
 | `panal route -stats` | what the router has learned: arm × type × tier |
 | `panal models [-refresh]` | the models each CLI lists, their estimated cost, which the router may pick |

@@ -26,8 +26,10 @@ written; the current names are in the README and `docs/`.
   installer dir `%LOCALAPPDATA%\cursor-agent`).
 - `panal delegate` runs
   `cursor-agent -p --output-format stream-json --trust --workspace DIR`
-  with `--force --approve-mcps` (writes) or `--mode plan --sandbox enabled`
-  (`-r`). Effort becomes `--model id[effort=…]`. Chain name is `cursor`.
+  with `--force` (writes; not confined to `-d`) or
+  `--auto-review --sandbox enabled` (`-r`). `--mode plan` is too
+  restrictive for investigation (it rejects `hostname`). Effort becomes
+  `--model id[effort=…]`. Chain name is `cursor`.
 - Models: `cursor-agent models`, fallback `--list-models`. Parser accepts
   id-per-line (optional tab + name) and JSON. Testdata slugs are from the
   public catalog; a live listing was not captured here.
@@ -37,9 +39,11 @@ written; the current names are in the README and `docs/`.
 - `-off` / `off =` / `config.Known` include cursor. Default chain appends
   it when the CLI is installed.
 
-Pending / not verified on a real Windows box with cursor-agent logged in:
-the exact `models` listing layout, quota-refusal wording, and whether
-`--approve-mcps` is enough to keep headless from hanging on MCP prompts.
+Verified on a Windows box with cursor-agent logged in: `-p` /
+`--print`, `--output-format`, `--auto-review`, `--force`/`--yolo`,
+`--sandbox`, `--trust`, `--workspace`, `--model`, `--list-models`,
+`status`. `--mode plan` rejected a harmless `hostname`. Not verified
+here: the exact `models` listing layout and quota-refusal wording.
 
 ## 2026-10-03: pets inside Claude Code
 

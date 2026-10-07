@@ -307,6 +307,8 @@ Check widths 80, 100, 132 and 160 at 40 lines.`
 }
 
 func TestScreens(t *testing.T) {
+	// Goldens include mascots; the host may have NO_COLOR set.
+	t.Setenv("NO_COLOR", "")
 	// A fixed time so the views don't depend on when the tests run.
 	fixedTime := time.Date(2026, 9, 26, 15, 4, 5, 0, time.Local)
 	oldNow := nowFn
@@ -427,6 +429,7 @@ func TestScreens(t *testing.T) {
 }
 
 func TestCaptureView(t *testing.T) {
+	t.Setenv("NO_COLOR", "")
 	fixedTime := time.Date(2026, 9, 26, 15, 4, 5, 0, time.Local)
 	oldNow := nowFn
 	nowFn = func() time.Time { return fixedTime }

@@ -225,6 +225,11 @@ func TestDoneWithCursor(t *testing.T) {
 	if !slices.Contains(args, "--force") || !slices.Contains(args, "--trust") {
 		t.Errorf("write mode flags: %q", args)
 	}
+	for _, w := range []string{"--auto-review", "--approve-mcps", "--mode"} {
+		if slices.Contains(args, w) {
+			t.Errorf("write mode should not pass %s: %q", w, args)
+		}
+	}
 	if ev := read(t, r.Log+".jsonl"); !strings.Contains(ev, `"tool_call"`) {
 		t.Errorf("events:\n%s", ev)
 	}
@@ -369,7 +374,7 @@ func TestReadOnlyArgs(t *testing.T) {
 		"codex":    {"-s", "read-only"},
 		"agy":      {"--mode", "plan", "--sandbox"},
 		"opencode": {"--agent", "plan"},
-		"cursor":   {"--mode", "plan", "--sandbox", "enabled"},
+		"cursor":   {"--auto-review", "--sandbox", "enabled"},
 	}
 	for cli, want := range cases {
 		a.Link.CLI = cli

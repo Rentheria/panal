@@ -62,6 +62,7 @@ func TestNoColorRemovesMascots(t *testing.T) {
 	defer func() { nowFn = oldNow }()
 	ls := setupTestEnv(t, fixedTime)
 
+	t.Setenv("NO_COLOR", "")
 	with := CaptureView(ls, 160, "")
 	t.Setenv("NO_COLOR", "1")
 	without := CaptureView(ls, 160, "")

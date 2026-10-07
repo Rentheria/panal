@@ -141,16 +141,19 @@ func opencodeArgs(a attempt) invocation {
 
 // cursorArgs: `cursor-agent -p` (also invoked as `agent`) runs one
 // non-interactive turn. --output-format stream-json writes JSONL events
-// that panal's activity reader parses from <log>.jsonl. --trust skips the
-// workspace-trust prompt (required in untrusted dirs). Writes: --force
-// (apply edits without asking) and --approve-mcps. Read-only: plan mode
-// plus the CLI sandbox. Effort is not a separate flag: it is folded into
-// --model as model[effort=…] when the model id does not already have
-// brackets.
+// that panal's activity reader parses from <log>.jsonl. --trust and
+// --workspace are always set so headless does not stall on the workspace
+// trust prompt. Writes: --force (also spelled --yolo on the CLI); that
+// is not confined to -d. Read-only: --auto-review lets the server
+// classifier run safe reads and commands and deny the rest; --sandbox
+// enabled adds the CLI sandbox. --mode plan is not used for -r: it
+// rejects even harmless shell commands. Effort is not a separate flag:
+// it is folded into --model as model[effort=…] when the model id does
+// not already have brackets.
 //
 //	cursor-agent -p --output-format stream-json --trust --workspace <dir>
 //	             [--model <model> | --model <model>[effort=<effort>]]
-//	             --force --approve-mcps | --mode plan --sandbox enabled
+//	             --force | --auto-review --sandbox enabled
 //	             (<task> | a pointer at the task file)
 func cursorArgs(a attempt) invocation {
 	args := []string{"-p", "--output-format", "stream-json", "--trust", "--workspace", a.Dir}
@@ -162,9 +165,9 @@ func cursorArgs(a attempt) invocation {
 		args = append(args, "--model", m)
 	}
 	if a.ReadOnly {
-		args = append(args, "--mode", "plan", "--sandbox", "enabled")
+		args = append(args, "--auto-review", "--sandbox", "enabled")
 	} else {
-		args = append(args, "--force", "--approve-mcps")
+		args = append(args, "--force")
 	}
 	inv := invocation{JSONEvents: true}
 	if shellSafe(a.Task) && len(a.Task) <= maxArgvTask {

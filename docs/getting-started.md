@@ -97,18 +97,24 @@ installer shims under `%LOCALAPPDATA%\cursor-agent`. It never writes to
 cursor-agent's own files.
 
 There is no live quota. cursor-agent can list models (`cursor-agent
-models` / `--list-models`) and show login status without starting a turn,
-but account usage is only in the interactive `/usage` view. The card
-shows "no live quota" unless a delegated run ended `out_of_quota`.
+models` / `--list-models`) and show the logged-in account
+(`cursor-agent status`) without starting a turn, but account usage is
+only in the interactive `/usage` view. The card shows "no live quota"
+unless a delegated run ended `out_of_quota`.
 
-`panal delegate` runs it non-interactively:
+`panal delegate` runs it non-interactively (`--trust` and `--workspace`
+so headless does not stall on the trust prompt):
 
 ```text
 cursor-agent -p --output-format stream-json --trust --workspace DIR
-             [--model MODEL] --force --approve-mcps   # may write
+             [--model MODEL] --force   # may write; not confined to DIR
 cursor-agent -p --output-format stream-json --trust --workspace DIR
-             [--model MODEL] --mode plan --sandbox enabled   # -r
+             [--model MODEL] --auto-review --sandbox enabled   # -r
 ```
+
+`--mode plan` is not used for `-r`: it rejects even a harmless
+read-only command. `--auto-review` lets the server classifier run safe
+reads and commands and deny the rest.
 
 A chain link is `cursor:<model>[:effort]`. Effort is not a separate flag:
 it is passed as `--model model[effort=…]` when the model id has no
