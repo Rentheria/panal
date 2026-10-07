@@ -3,12 +3,14 @@ package delegate
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"runtime"
 	"slices"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -378,6 +380,67 @@ func TestSameAgentTwiceGetsTwoRunFiles(t *testing.T) {
 	_, res := e.run("x", "codex:a codex:b")
 	if len(res) != 2 || res[0].RunFile == res[1].RunFile || res[0].Log == res[1].Log {
 		t.Fatalf("results %+v", res)
+	}
+}
+
+func TestConcurrentDelegationsSameSecond(t *testing.T) {
+	now := time.Date(2026, 10, 7, 12, 30, 26, 0, time.UTC)
+	shared := t.TempDir()
+	const n = 12
+	type got struct {
+		id, taskFile, task string
+		err                string
+	}
+	ch := make(chan got, n)
+	var wg sync.WaitGroup
+	for i := 0; i < n; i++ {
+		wg.Add(1)
+		go func(i int) {
+			defer wg.Done()
+			e := newEnv(t, []string{"cursor"}, map[string]string{"cursor": "ok"})
+			e.r.RunsDir = shared
+			e.r.Now = func() time.Time { return now }
+			task := fmt.Sprintf("Fix the table\n\nconcurrent run %d", i)
+			code, res := e.run(task, "cursor")
+			if code != 0 || len(res) != 1 {
+				ch <- got{err: fmt.Sprintf("run %d: exit %d res %v\n%s", i, code, statuses(res), e.out.String())}
+				return
+			}
+			r, err := runs.ReadFile(res[0].RunFile)
+			if err != nil {
+				ch <- got{err: err.Error()}
+				return
+			}
+			body, _ := os.ReadFile(r.TaskFile)
+			ch <- got{id: r.ID, taskFile: r.TaskFile, task: string(body)}
+		}(i)
+	}
+	wg.Wait()
+	close(ch)
+	ids, files, texts := map[string]bool{}, map[string]bool{}, map[string]bool{}
+	for g := range ch {
+		if g.err != "" {
+			t.Error(g.err)
+			continue
+		}
+		if !strings.Contains(g.id, ".") {
+			t.Errorf("id %q should include milliseconds", g.id)
+		}
+		if ids[g.id] {
+			t.Errorf("duplicate id %q", g.id)
+		}
+		ids[g.id] = true
+		if g.taskFile == "" || files[g.taskFile] {
+			t.Errorf("task file %q", g.taskFile)
+		}
+		files[g.taskFile] = true
+		if texts[g.task] {
+			t.Errorf("two runs shared task text %q", g.task)
+		}
+		texts[g.task] = true
+	}
+	if len(ids) != n {
+		t.Fatalf("got %d unique ids, want %d", len(ids), n)
 	}
 }
 

@@ -53,6 +53,12 @@ enabled` on Windows exits 1 (`Sandbox mode is enabled but not
 available`). Live `cursor-agent models` is `id - Display name`.
 Not verified here: quota-refusal wording.
 
+- Run ids are `YYYYMMDD-HHMMSS.mmm-xxxxxxxx` (milliseconds + random). The
+  first write of a run file and of `<id>.task.md` uses `O_EXCL` and
+  retries, so two `delegate` in the same second cannot share an id or
+  task file. A `running` record whose pid is gone is rewritten `failed`
+  on the next dashboard read. Old second-resolution ids still parse.
+
 ## 2026-10-03: pets inside Claude Code
 
 - `panal pet`: one mascot for a split pane next to any CLI, plus `-json` /

@@ -143,5 +143,10 @@ router's reason and the `panal feedback` command to rate it.
 | full task | `~/.panal/runs/<id>.task.md` | the whole task when it has more than one line; the run file keeps the first line and points to it in `task_file` |
 | router checks | `~/.panal/router-checks.json` | the finished run's changes and tests, checked right away for the router |
 
-`<id>` is the start time, `YYYYMMDD-HHMMSS` (with `-2`, `-3`… if taken).
+`<id>` is `YYYYMMDD-HHMMSS.mmm-xxxxxxxx` (milliseconds plus eight random hex
+digits) so two `panal delegate` in the same second cannot share a run or
+task file. Older files keep `YYYYMMDD-HHMMSS` (`-2`, `-3`… if taken).
+The first write of a run file and of `<id>.task.md` uses `O_EXCL` and
+retries on collision. A run left `running` whose process is gone is
+rewritten as `failed` the next time the dashboard reads it.
 `PANAL_DATA` moves `~/.panal` as a whole.

@@ -78,6 +78,12 @@ func (d *Delegate) Read() state.Row {
 			continue
 		}
 
+		if st.Status == runs.Running && !f.Legacy {
+			if closed, ok := runs.CloseIfDead(f.Path, st, pidAliveFn, nowFn()); ok {
+				st = closed
+			}
+		}
+
 		if newest == nil || start.After(newestStart) {
 			newest = &st
 			newestStart = start
