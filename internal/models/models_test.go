@@ -23,6 +23,9 @@ import (
 //	                              each) dropped
 //	opencode-api-model-list.json  opencode api model.list, with the
 //	                              directory it reports replaced
+//	cursor-models.txt             cursor-agent models: public model slugs
+//	                              as one id<TAB>name per line (the CLI was
+//	                              not available to capture a live listing)
 //
 // They only hold catalogs: ids, names, efforts, prices.
 
@@ -47,6 +50,7 @@ func realCatalog(t *testing.T) Catalog {
 	}{
 		"agy":      {"agy-models.txt", ParseAgy},
 		"codex":    {"codex-debug-models.json", ParseCodex},
+		"cursor":   {"cursor-models.txt", ParseCursor},
 		"opencode": {"opencode-api-model-list.json", ParseOpencodeAPI},
 	} {
 		ms, err := f.parse(sample(t, f.file))
@@ -131,6 +135,33 @@ func TestParseOpencode(t *testing.T) {
 	}
 	if ms, _ := ParseOpencodeList([]byte("opencode/big-pickle\nopencode-go/glm-5.3\n\n")); len(ms) != 2 || ms[1].ID != "opencode-go/glm-5.3" {
 		t.Errorf("provider/model lines: %+v", ms)
+	}
+}
+
+func TestParseCursor(t *testing.T) {
+	ms, err := ParseCursor(append([]byte("Available models\n"), sample(t, "cursor-models.txt")...))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(ms) != 9 {
+		t.Fatalf("%d models: %+v", len(ms), ms)
+	}
+	if ms[0].ID != "auto" || ms[0].Name != "Auto" {
+		t.Errorf("first: %+v", ms[0])
+	}
+	if ms[1].ID != "composer-2.5" || ms[1].Name != "Composer 2.5" {
+		t.Errorf("composer: %+v", ms[1])
+	}
+	jsonIDs, err := ParseCursor([]byte(`["composer-2.5","grok-4.7"]`))
+	if err != nil || len(jsonIDs) != 2 || jsonIDs[1].ID != "grok-4.7" {
+		t.Errorf("json ids: %v %+v", err, jsonIDs)
+	}
+	obj, err := ParseCursor([]byte(`{"models":[{"id":"composer-2.5","name":"Composer 2.5"}]}`))
+	if err != nil || len(obj) != 1 || obj[0].Name != "Composer 2.5" {
+		t.Errorf("json object: %v %+v", err, obj)
+	}
+	if ms, _ := ParseCursor([]byte("Available models\n\n")); len(ms) != 0 {
+		t.Errorf("headers only: %+v", ms)
 	}
 }
 

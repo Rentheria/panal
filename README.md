@@ -8,17 +8,17 @@
 [![License: Apache-2.0](https://img.shields.io/github/license/AlbertoVasquezR/panal)](LICENSE)
 [![go install](https://img.shields.io/badge/go%20install-github.com%2FAlbertoVasquezR%2Fpanal%2Fcmd%2Fpanal%40latest-00ADD8?logo=go&logoColor=white)](docs/getting-started.md)
 
-![The four mascots: claude, agy, codex and opencode](docs/mascots.png)
+![The mascots: claude, agy, codex, opencode and cursor](docs/mascots.png)
 
 </div>
 
 Panal (Spanish for *honeycomb*) watches the coding agents you orchestrate
-from Claude Code (**opencode**, **codex**, **agy** and **Claude Code**
+from Claude Code (**opencode**, **codex**, **agy**, **cursor-agent** and **Claude Code**
 itself) and shows each one as a live card with a pixel-art mascot, its
 status, model, task, last action and quota. It only reads the agents'
 files; it never changes them.
 
-`panal delegate` hands a task to codex, agy or opencode, falls back to
+`panal delegate` hands a task to codex, agy, opencode or cursor, falls back to
 the next one when an agent is out of quota, and with `-c auto` lets a
 small, explainable router pick the cheapest agent, model and effort that
 has been getting that kind of task right **on your machine**.
@@ -248,6 +248,7 @@ Every key and variable: [docs/configuration.md](docs/configuration.md).
 | **codex** | `panal delegate` runs and logs (activity, tests); `rate_limits`, tokens and credits from `~/.codex/sessions`; live quota from `codex app-server` (no turn) |
 | **agy** | `panal delegate` runs and logs, including the quota summary in its log; live quota from `agy -p /usage` (no turn) |
 | **opencode** | `panal delegate` runs; quota errors in its log; `opencode.db` (read-only); Go plan usage from opencode's usage endpoint |
+| **cursor** (`cursor-agent` / `agent`) | `panal delegate` runs and their stream-json logs (status, model, last action); the CLI on `PATH` or `%LOCALAPPDATA%\cursor-agent` for `-doctor`. No live quota: cursor-agent has no usage query that spends nothing (`/usage` is interactive only) |
 
 ## Docs
 

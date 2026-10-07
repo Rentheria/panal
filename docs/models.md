@@ -19,6 +19,8 @@ project config changes the answer), with no stdin and a timeout.
 | codex | `codex debug models` | the model catalog as JSON: slugs, efforts per model, default effort, hidden and retiring models, its own priority |
 | opencode | `opencode api model.list` | `provider/model`, variants (efforts), real prices, deprecated models |
 | opencode (fallback) | `opencode models` | `provider/model` per line (opencode 2.0 prints nothing here, hence the API call first) |
+| cursor | `cursor-agent models` | one id per line, optional tab + display name; JSON arrays are accepted |
+| cursor (fallback) | `cursor-agent --list-models` | the same listing |
 
 ## The cache
 

@@ -206,6 +206,38 @@ func TestRealFailureDoesNotFallBack(t *testing.T) {
 	}
 }
 
+func TestDoneWithCursor(t *testing.T) {
+	e := newEnv(t, []string{"cursor"}, map[string]string{"cursor": "ok"})
+	code, res := e.run("Fix the table", "cursor:composer-2.5:high")
+	if code != 0 || len(res) != 1 || res[0].Status != runs.Done {
+		t.Fatalf("code %d, results %+v\n%s", code, res, e.out.String())
+	}
+	r := e.runFiles()["cursor"]
+	if r.Status != runs.Done || r.Model != "composer-2.5" || r.Effort != "high" || r.Task != "Fix the table" {
+		t.Errorf("run file: %+v", r)
+	}
+	args := strings.Split(e.recorded("cursor.args"), "\n")
+	for _, want := range [][]string{{"-p", "--output-format"}, {"--output-format", "stream-json"}, {"--workspace", e.dir}, {"--model", "composer-2.5[effort=high]"}} {
+		if i := slices.Index(args, want[0]); i < 0 || i+1 >= len(args) || args[i+1] != want[1] {
+			t.Errorf("args %q lack %q", args, want)
+		}
+	}
+	if !slices.Contains(args, "--force") || !slices.Contains(args, "--trust") {
+		t.Errorf("write mode flags: %q", args)
+	}
+	if ev := read(t, r.Log+".jsonl"); !strings.Contains(ev, `"tool_call"`) {
+		t.Errorf("events:\n%s", ev)
+	}
+}
+
+func TestCursorQuotaFallsBack(t *testing.T) {
+	e := newEnv(t, []string{"cursor", "agy"}, map[string]string{"cursor": "quota", "agy": "ok"})
+	code, res := e.run("Add a test", "cursor agy")
+	if code != 0 || !slices.Equal(statuses(res), []runs.Status{runs.OutOfQuota, runs.Done}) {
+		t.Fatalf("code %d, %v\n%s", code, statuses(res), e.out.String())
+	}
+}
+
 func TestTalkingAboutRateLimitsIsNotOutOfQuota(t *testing.T) {
 	e := newEnv(t, []string{"opencode"}, map[string]string{"opencode": "talk"})
 	if code, res := e.run("x", "opencode"); code != 0 || res[0].Status != runs.Done {
@@ -337,6 +369,7 @@ func TestReadOnlyArgs(t *testing.T) {
 		"codex":    {"-s", "read-only"},
 		"agy":      {"--mode", "plan", "--sandbox"},
 		"opencode": {"--agent", "plan"},
+		"cursor":   {"--mode", "plan", "--sandbox", "enabled"},
 	}
 	for cli, want := range cases {
 		a.Link.CLI = cli
@@ -345,7 +378,7 @@ func TestReadOnlyArgs(t *testing.T) {
 		if i < 0 || !slices.Equal(args[i:i+len(want)], want) {
 			t.Errorf("%s read-only args %q lack %q", cli, args, want)
 		}
-		for _, w := range []string{"workspace-write", "--auto", "--dangerously-skip-permissions"} {
+		for _, w := range []string{"workspace-write", "--auto", "--dangerously-skip-permissions", "--force"} {
 			if slices.Contains(args, w) {
 				t.Errorf("%s read-only args contain %s", cli, w)
 			}
@@ -370,6 +403,9 @@ func TestParseChain(t *testing.T) {
 			t.Errorf("round trip %v → %q → %v", l, l.String(), back)
 		}
 	}
+	if _, err := ParseChain("cursor:composer-2.5:high"); err != nil {
+		t.Errorf("cursor link: %v", err)
+	}
 	if _, err := ParseChain("claude:x"); err == nil {
 		t.Error("unknown agent should fail")
 	}
@@ -385,7 +421,7 @@ func TestDefaultChainIsTheInstalledCLIs(t *testing.T) {
 		}
 		return n, nil
 	}
-	if got := defaultChain(look); !slices.Equal(got, []Link{{CLI: "agy"}, {CLI: "opencode"}}) {
+	if got := defaultChain(look); !slices.Equal(got, []Link{{CLI: "agy"}, {CLI: "opencode"}, {CLI: "cursor"}}) {
 		t.Errorf("default chain %v", got)
 	}
 }

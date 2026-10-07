@@ -41,6 +41,7 @@ var agents = map[string]agent{
 	"codex":    {build: codexArgs},
 	"agy":      {build: agyArgs},
 	"opencode": {build: opencodeArgs},
+	"cursor":   {build: cursorArgs},
 }
 
 // maxArgvTask: a task longer than this does not go on the command line
@@ -136,6 +137,46 @@ func opencodeArgs(a attempt) invocation {
 	}
 	args = append(args, "--file", a.TaskFile, "The task is in the attached file. Do what it says.")
 	return invocation{Args: args, NeedsTaskFile: true}
+}
+
+// cursorArgs: `cursor-agent -p` (also invoked as `agent`) runs one
+// non-interactive turn. --output-format stream-json writes JSONL events
+// that panal's activity reader parses from <log>.jsonl. --trust skips the
+// workspace-trust prompt (required in untrusted dirs). Writes: --force
+// (apply edits without asking) and --approve-mcps. Read-only: plan mode
+// plus the CLI sandbox. Effort is not a separate flag: it is folded into
+// --model as model[effort=…] when the model id does not already have
+// brackets.
+//
+//	cursor-agent -p --output-format stream-json --trust --workspace <dir>
+//	             [--model <model> | --model <model>[effort=<effort>]]
+//	             --force --approve-mcps | --mode plan --sandbox enabled
+//	             (<task> | a pointer at the task file)
+func cursorArgs(a attempt) invocation {
+	args := []string{"-p", "--output-format", "stream-json", "--trust", "--workspace", a.Dir}
+	if a.Link.Model != "" {
+		m := a.Link.Model
+		if a.Link.Effort != "" && !strings.Contains(m, "[") {
+			m += "[effort=" + a.Link.Effort + "]"
+		}
+		args = append(args, "--model", m)
+	}
+	if a.ReadOnly {
+		args = append(args, "--mode", "plan", "--sandbox", "enabled")
+	} else {
+		args = append(args, "--force", "--approve-mcps")
+	}
+	inv := invocation{JSONEvents: true}
+	if shellSafe(a.Task) && len(a.Task) <= maxArgvTask {
+		return invocation{Args: append(args, a.Task), JSONEvents: true}
+	}
+	if a.TaskFile == "" {
+		return invocation{NeedsTaskFile: true, JSONEvents: true}
+	}
+	args = append(args, fileTaskPrompt(a.TaskFile))
+	inv.Args = args
+	inv.NeedsTaskFile = true
+	return inv
 }
 
 func fileTaskPrompt(path string) string {

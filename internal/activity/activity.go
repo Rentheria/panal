@@ -36,6 +36,8 @@ func Latest(agent, logPath string) (string, time.Time) {
 		return fromFile(logPath+".jsonl", FromCodex)
 	case "agy":
 		return fromFile(logPath+".log", FromAgy)
+	case "cursor":
+		return fromFile(logPath+".jsonl", FromCursor)
 	}
 	return "", time.Time{}
 }
@@ -304,6 +306,8 @@ func Repetition(agent, logPath string) (string, int) {
 		path, actions = logPath+".jsonl", codexActions
 	case "agy":
 		path, actions = logPath+".log", agyActions
+	case "cursor":
+		path, actions = logPath+".jsonl", cursorActions
 	default:
 		return "", 0
 	}
@@ -410,6 +414,92 @@ func agyActions(b []byte) []string {
 				id = "$ " + CleanCommand(call.Args.CommandLine)
 			}
 			out = append(out, strings.TrimSpace(id))
+		}
+	}
+	return out
+}
+
+// ----------------------------------------------------------------- cursor --
+// cursor-agent -p --output-format stream-json: one JSON object per line,
+// Claude Code-compatible. Tool calls use tool_call.{shell,read,write,…}ToolCall.
+
+type cursorEvent struct {
+	Type    string `json:"type"`
+	Subtype string `json:"subtype"`
+	Model   string `json:"model"`
+	Message struct {
+		Content []struct {
+			Type string `json:"type"`
+			Text string `json:"text"`
+		} `json:"content"`
+	} `json:"message"`
+	ToolCall map[string]struct {
+		Args struct {
+			Command string `json:"command"`
+			Path    string `json:"path"`
+		} `json:"args"`
+	} `json:"tool_call"`
+}
+
+// FromCursor looks, from the end backwards, for the last stream-json event
+// that says something: a tool call or the last assistant line.
+func FromCursor(b []byte) (string, time.Time) {
+	lines := bytes.Split(b, []byte("\n"))
+	for i := len(lines) - 1; i >= 0; i-- {
+		if s := cursorLine(lines[i]); s != "" {
+			return s, time.Time{}
+		}
+	}
+	return "", time.Time{}
+}
+
+func cursorLine(l []byte) string {
+	var ev cursorEvent
+	if json.Unmarshal(bytes.TrimSpace(l), &ev) != nil {
+		return ""
+	}
+	switch ev.Type {
+	case "tool_call":
+		if ev.Subtype != "" && ev.Subtype != "started" {
+			return ""
+		}
+		for name, call := range ev.ToolCall {
+			kind := strings.TrimSuffix(name, "ToolCall")
+			if call.Args.Command != "" {
+				if c := CleanCommand(call.Args.Command); c != "" {
+					return "$ " + c
+				}
+			}
+			if call.Args.Path != "" {
+				base := filepath.Base(call.Args.Path)
+				switch {
+				case strings.Contains(strings.ToLower(kind), "write"):
+					return "writes " + base
+				case strings.Contains(strings.ToLower(kind), "read"):
+					return "reads " + base
+				default:
+					return kind + " " + base
+				}
+			}
+			if kind != "" {
+				return "uses " + kind
+			}
+		}
+	case "assistant":
+		for _, c := range ev.Message.Content {
+			if t := stripMarkdown(firstLine(c.Text)); t != "" {
+				return "«" + t + "»"
+			}
+		}
+	}
+	return ""
+}
+
+func cursorActions(b []byte) []string {
+	var out []string
+	for _, l := range bytes.Split(b, []byte("\n")) {
+		if s := cursorLine(l); strings.HasPrefix(s, "$ ") || strings.HasPrefix(s, "writes ") || strings.HasPrefix(s, "reads ") {
+			out = append(out, s)
 		}
 	}
 	return out

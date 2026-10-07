@@ -11,6 +11,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/AlbertoVasquezR/panal/internal/config"
 )
 
 // How each CLI is asked for its models. Every command only lists: none of
@@ -22,6 +24,9 @@ import (
 //	opencode  opencode api model.list GET /api/model on opencode's own server,
 //	                                  through its CLI (it brings its own auth)
 //	          opencode models         fallback: "provider/model" per line
+//	cursor    cursor-agent models     one id per line, optional tab + display
+//	          cursor-agent --list-models  same listing; the binary is
+//	                                  cursor-agent or the agent alias
 //
 // opencode 2.0's `opencode models` prints nothing at all (its provider list
 // comes back empty even when models are configured), whether or not stdout
@@ -36,6 +41,7 @@ var queries = map[string][]query{
 	"agy":      {{[]string{"models"}, ParseAgy}},
 	"codex":    {{[]string{"debug", "models"}, ParseCodex}},
 	"opencode": {{[]string{"api", "model.list"}, ParseOpencodeAPI}, {[]string{"models"}, ParseOpencodeList}},
+	"cursor":   {{[]string{"models"}, ParseCursor}, {[]string{"--list-models"}, ParseCursor}},
 }
 
 // Runner runs a CLI and returns what it printed on stdout. Tests replace it
@@ -46,6 +52,11 @@ type Runner func(ctx context.Context, name string, args ...string) ([]byte, erro
 // no project's own config changes the answer), with no stdin and, on
 // Windows, without a console window of its own.
 func Exec(ctx context.Context, name string, args ...string) ([]byte, error) {
+	if len(config.Bins[name]) > 0 {
+		if p, err := config.LookPath(name); err == nil {
+			name = p
+		}
+	}
 	cmd := exec.CommandContext(ctx, name, args...)
 	if h, err := os.UserHomeDir(); err == nil {
 		cmd.Dir = h
@@ -103,7 +114,14 @@ func Command(cli string) string {
 	if len(qs) == 0 {
 		return ""
 	}
-	return cli + " " + strings.Join(qs[0].args, " ")
+	return cliLabel(cli) + " " + strings.Join(qs[0].args, " ")
+}
+
+func cliLabel(cli string) string {
+	if cli == "cursor" {
+		return "cursor-agent"
+	}
+	return cli
 }
 
 // Discover asks one CLI for its models: each of its queries in turn, until
@@ -117,7 +135,7 @@ func Discover(ctx context.Context, run Runner, cli string, now time.Time) *CLI {
 	}
 	var why []string
 	for _, q := range qs {
-		cmd := cli + " " + strings.Join(q.args, " ")
+		cmd := cliLabel(cli) + " " + strings.Join(q.args, " ")
 		out, err := run(ctx, cli, q.args...)
 		if err != nil {
 			why = append(why, cmd+": "+err.Error())
@@ -371,4 +389,118 @@ func ParseOpencodeList(b []byte) ([]Model, error) {
 		out = append(out, Model{ID: l})
 	}
 	return out, s.Err()
+}
+
+// ParseCursor reads `cursor-agent models` or `cursor-agent --list-models`.
+// The CLI prints one model id per line, optionally with a tab (or two or
+// more spaces) and a display name. A JSON array of ids or of {id,name}
+// objects is accepted too. Headers and decorative lines are skipped.
+func ParseCursor(b []byte) ([]Model, error) {
+	if ms, err := parseCursorJSON(b); err == nil && len(ms) > 0 {
+		return ms, nil
+	}
+	var out []Model
+	seen := map[string]bool{}
+	s := bufio.NewScanner(bytes.NewReader(b))
+	for s.Scan() {
+		l := strings.TrimRight(s.Text(), "\r")
+		l = strings.TrimSpace(l)
+		if l == "" || strings.HasPrefix(l, "#") {
+			continue
+		}
+		low := strings.ToLower(l)
+		if strings.HasPrefix(low, "available") || strings.HasPrefix(low, "model") && !strings.Contains(l, "-") {
+			continue
+		}
+		id, name, _ := strings.Cut(l, "\t")
+		if !strings.Contains(l, "\t") {
+			if i := strings.Index(l, "  "); i > 0 {
+				id, name = l[:i], strings.TrimSpace(l[i:])
+			} else {
+				id, name = l, ""
+			}
+		}
+		id = strings.TrimSpace(id)
+		if !cursorModelID(id) || seen[id] {
+			continue
+		}
+		seen[id] = true
+		out = append(out, Model{ID: id, Name: strings.TrimSpace(name)})
+	}
+	return out, s.Err()
+}
+
+func parseCursorJSON(b []byte) ([]Model, error) {
+	trim := bytes.TrimSpace(b)
+	if len(trim) == 0 || (trim[0] != '{' && trim[0] != '[') {
+		return nil, fmt.Errorf("not JSON")
+	}
+	var ids []string
+	if err := json.Unmarshal(trim, &ids); err == nil {
+		var out []Model
+		for _, id := range ids {
+			if cursorModelID(id) {
+				out = append(out, Model{ID: id})
+			}
+		}
+		return out, nil
+	}
+	var doc struct {
+		Models []struct {
+			ID    string `json:"id"`
+			Slug  string `json:"slug"`
+			Name  string `json:"name"`
+			Model string `json:"model"`
+		} `json:"models"`
+	}
+	if err := json.Unmarshal(trim, &doc); err != nil {
+		var arr []struct {
+			ID   string `json:"id"`
+			Slug string `json:"slug"`
+			Name string `json:"name"`
+		}
+		if err := json.Unmarshal(trim, &arr); err != nil {
+			return nil, err
+		}
+		var out []Model
+		for _, m := range arr {
+			id := firstNonEmpty(m.ID, m.Slug)
+			if cursorModelID(id) {
+				out = append(out, Model{ID: id, Name: m.Name})
+			}
+		}
+		return out, nil
+	}
+	var out []Model
+	for _, m := range doc.Models {
+		id := firstNonEmpty(m.ID, m.Slug, m.Model)
+		if cursorModelID(id) {
+			out = append(out, Model{ID: id, Name: m.Name})
+		}
+	}
+	return out, nil
+}
+
+func cursorModelID(id string) bool {
+	if id == "" || strings.ContainsAny(id, " \t") {
+		return false
+	}
+	if strings.ContainsAny(id, "[](){}") && !strings.Contains(id, "[") {
+		return false
+	}
+	for _, r := range id {
+		if r > 127 {
+			return false
+		}
+	}
+	return strings.ContainsAny(id, "-_./") || id == "auto"
+}
+
+func firstNonEmpty(ss ...string) string {
+	for _, s := range ss {
+		if strings.TrimSpace(s) != "" {
+			return s
+		}
+	}
+	return ""
 }

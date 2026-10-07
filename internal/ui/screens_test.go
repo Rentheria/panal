@@ -43,7 +43,7 @@ func setupTestEnv(t *testing.T, fixedTime time.Time) []readers.Reader {
 	if err := os.MkdirAll(runsDir, 0o755); err != nil {
 		t.Fatalf("could not create runsDir: %v", err)
 	}
-	for _, sub := range []string{"claude", "agy", "codex", "opencode"} {
+	for _, sub := range []string{"claude", "agy", "codex", "opencode", "cursor"} {
 		if err := os.MkdirAll(filepath.Join(runsDir, sub), 0o755); err != nil {
 			t.Fatalf("could not create subdir %s: %v", sub, err)
 		}
@@ -154,6 +154,24 @@ Check widths 80, 100, 132 and 160 at 40 lines.`
 				"end":       fixedTime.Add(-20*time.Hour - 58*time.Minute).Format(time.RFC3339),
 				"status":    runOutOfQuota,
 				"rc":        &rcTwo,
+			},
+		},
+		{
+			name: "20260926-120000-cursor.json",
+			data: map[string]any{
+				"version":   2,
+				"id":        "20260926-120000-cursor",
+				"agent":     "cursor",
+				"model":     "composer-2.5",
+				"task":      "Add a golden screen for the cursor card",
+				"task_file": taskFile,
+				"dir":       runsDir,
+				"start":     fixedTime.Add(-3 * time.Hour).Format(time.RFC3339),
+				"end":       fixedTime.Add(-2*time.Hour - 50*time.Minute).Format(time.RFC3339),
+				"status":    runDone,
+				"rc":        &rcZero,
+				"task_type": "tests",
+				"tier":      "medium",
 			},
 		},
 		{
@@ -269,6 +287,20 @@ Check widths 80, 100, 132 and 160 at 40 lines.`
 				Dir:    filepath.Join(runsDir, "opencode"),
 				Quota:  state.Quota{Summary: "Go plan available"},
 				Detail: "mode: idle\nno active process",
+			},
+		},
+		screenReader{
+			row: state.Row{
+				Agent:  "cursor",
+				Status: state.Idle,
+				Model:  "composer-2.5",
+				Task:   "Waiting for a delegated task",
+				Since:  fixedTime.Add(-45 * time.Minute),
+				End:    fixedTime.Add(-45 * time.Minute),
+				Start:  fixedTime.Add(-50 * time.Minute),
+				Dir:    filepath.Join(runsDir, "cursor"),
+				Quota:  state.Quota{Summary: "no live quota"},
+				Detail: "cursor-agent has no usage query that spends nothing",
 			},
 		},
 	}

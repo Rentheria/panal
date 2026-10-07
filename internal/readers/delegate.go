@@ -203,7 +203,7 @@ func belongsToAgent(fileName, agent string) bool {
 	if strings.Contains(fileName, agent) {
 		return true
 	}
-	others := []string{"agy", "codex", "opencode", "claude"}
+	others := []string{"agy", "codex", "opencode", "claude", "cursor"}
 	for _, other := range others {
 		if other != agent && strings.Contains(fileName, other) {
 			return false

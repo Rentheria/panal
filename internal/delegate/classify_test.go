@@ -35,6 +35,14 @@ func TestClassify(t *testing.T) {
 		{"agy", 1, "out of credits", runs.OutOfQuota},
 		{"agy", 1, "tool permission denied", runs.NoPermission},
 		{"agy", 2, "flag provided but not defined: -x", runs.Failed},
+		// cursor-agent
+		{"cursor", 1, "You've hit your usage limit. Upgrade or wait for the reset.", runs.OutOfQuota},
+		{"cursor", 1, "Error: included usage exhausted for this billing cycle", runs.OutOfQuota},
+		{"cursor", 1, "Untrusted workspace. Pass --trust to continue.", runs.NoPermission},
+		{"cursor", 1, "headless mode is disabled for this team", runs.NoPermission},
+		{"cursor", 1, "Not logged in. Run agent login.", runs.NoPermission},
+		{"cursor", 0, "I added handling for the case where the API says rate limit exceeded (429)", runs.Done},
+		{"cursor", 1, "TypeError: cannot read property", runs.Failed},
 		// numbers that merely contain 429 are not quota
 		{"agy", 1, "error at line 4290 of parser.go", runs.Failed},
 	}

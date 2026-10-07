@@ -1,7 +1,7 @@
 # Delegating tasks: `panal delegate`
 
-`panal delegate` hands a task to a coding agent CLI (codex, agy or
-opencode), falls back to the next one in a chain when an agent is out of
+`panal delegate` hands a task to a coding agent CLI (codex, agy,
+opencode or cursor), falls back to the next one in a chain when an agent is out of
 quota, and records every attempt so the dashboard shows it while it runs.
 With `-c auto` the [router](router.md) picks the chain.
 
@@ -49,7 +49,7 @@ Where the chain comes from, first match wins:
 1. `-c`
 2. `PANAL_CHAIN`
 3. `chain = ...` in `panal.conf`
-4. the default: every installed one of `codex`, `agy`, `opencode`, in that order
+4. the default: every installed one of `codex`, `agy`, `opencode`, `cursor`, in that order
 
 `-c auto`, `PANAL_CHAIN=auto` or `chain = auto` hand the order to the
 router. **When a pool is configured and no chain is, `auto` is the
@@ -75,6 +75,7 @@ exhausted) in `internal/delegate/classify.go`.
 | codex | `codex exec --json -o <log>.last -C DIR -s workspace-write [-m model] [-c model_reasoning_effort="…"] -` (task on stdin) | same with `-s read-only` |
 | agy | `agy -p <task> --log-file <log>.log [--model …] [--effort …] --dangerously-skip-permissions` | `--mode plan --sandbox` instead |
 | opencode | `opencode run [--model provider/model[#effort]] --auto <task>` | `--agent plan` instead of `--auto` |
+| cursor | `cursor-agent -p --output-format stream-json --trust --workspace DIR [--model …] --force --approve-mcps <task>` (binary: `cursor-agent` or `agent`) | `--mode plan --sandbox enabled` instead of `--force --approve-mcps` |
 
 > **agy runs with `--dangerously-skip-permissions` when it may write.** It
 > never asks before acting and is **not confined to `-d`**: it can edit
@@ -128,6 +129,7 @@ router's reason and the `panal feedback` command to rate it.
 | log | `~/.panal/logs/<id>-<agent>-<model>.txt` (`PANAL_LOGS`) | what the agent printed |
 | codex events | `<log>.jsonl`, `<log>.last` | codex's JSON events and final message (appended to the log) |
 | agy log | `<log>.log` | agy's own log (where its quota summary is read from) |
+| cursor events | `<log>.jsonl` | cursor-agent's `--output-format stream-json` events (last action) |
 | full task | `~/.panal/runs/<id>.task.md` | the whole task when it has more than one line; the run file keeps the first line and points to it in `task_file` |
 | router checks | `~/.panal/router-checks.json` | the finished run's changes and tests, checked right away for the router |
 

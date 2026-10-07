@@ -16,6 +16,31 @@ written; the current names are in the README and `docs/`.
 
 ---
 
+## 2026-10-07: cursor-agent as a first-class agent
+
+- New reader `internal/readers/cursor.go`: status, model, task and last
+  action from `panal delegate` run files; stream-json activity from
+  `<log>.jsonl`. No live quota: cursor-agent has no usage query that
+  spends nothing (`/usage` is interactive only). `-doctor` lists the
+  resolved CLI path (`cursor-agent`, then `agent`, then the Windows
+  installer dir `%LOCALAPPDATA%\cursor-agent`).
+- `panal delegate` runs
+  `cursor-agent -p --output-format stream-json --trust --workspace DIR`
+  with `--force --approve-mcps` (writes) or `--mode plan --sandbox enabled`
+  (`-r`). Effort becomes `--model id[effort=…]`. Chain name is `cursor`.
+- Models: `cursor-agent models`, fallback `--list-models`. Parser accepts
+  id-per-line (optional tab + name) and JSON. Testdata slugs are from the
+  public catalog; a live listing was not captured here.
+- Dashboard: cyan `#38BDF8` diamond mascot; fifth card after opencode.
+  Five cards use 3-across before 2-across so they don't stack 2+2+1 at
+  100/132 columns. Four-card layout is unchanged.
+- `-off` / `off =` / `config.Known` include cursor. Default chain appends
+  it when the CLI is installed.
+
+Pending / not verified on a real Windows box with cursor-agent logged in:
+the exact `models` listing layout, quota-refusal wording, and whether
+`--approve-mcps` is enough to keep headless from hanging on MCP prompts.
+
 ## 2026-10-03: pets inside Claude Code
 
 - `panal pet`: one mascot for a split pane next to any CLI, plus `-json` /

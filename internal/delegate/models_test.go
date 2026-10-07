@@ -30,6 +30,7 @@ func fakeCLIs(t *testing.T) models.Runner {
 	out := map[string]string{
 		"agy models":              read("agy-models.txt"),
 		"codex debug models":      read("codex-debug-models.json"),
+		"cursor models":           read("cursor-models.txt"),
 		"opencode api model.list": `{"location":{"directory":"C:\\Users\\someone"},"data":[]}`,
 		"opencode models":         "",
 	}
