@@ -15,7 +15,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"path/filepath"
 	"regexp"
 	"strings"
 	"sync"
@@ -147,7 +146,7 @@ func FromCodex(b []byte) (string, time.Time) {
 		case "file_change":
 			var ps []string
 			for _, c := range it.Changes {
-				ps = append(ps, filepath.Base(c.Path))
+				ps = append(ps, baseName(c.Path))
 			}
 			if len(ps) > 0 {
 				return "edits " + strings.Join(ps, ", "), time.Time{}
@@ -288,6 +287,16 @@ func firstLine(s string) string {
 		s = s[:i]
 	}
 	return strings.TrimSpace(s)
+}
+
+// baseName is the last element of a Windows or Unix path. Agent logs mix
+// both; filepath.Base only splits on this OS's separator.
+func baseName(p string) string {
+	p = strings.TrimRight(p, `/\`)
+	if i := strings.LastIndexAny(p, `/\`); i >= 0 {
+		return p[i+1:]
+	}
+	return p
 }
 
 // ------------------------------------------------------------- repetition --
@@ -471,7 +480,7 @@ func cursorLine(l []byte) string {
 				}
 			}
 			if call.Args.Path != "" {
-				base := filepath.Base(call.Args.Path)
+				base := baseName(call.Args.Path)
 				switch {
 				case strings.Contains(strings.ToLower(kind), "write"):
 					return "writes " + base
