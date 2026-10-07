@@ -39,6 +39,10 @@ written; the current names are in the README and `docs/`.
 - `-off` / `off =` / `config.Known` include cursor. Default chain appends
   it when the CLI is installed.
 
+- agy `delegate -r` that auto-denies a tool in print mode (exit 0,
+  "headless mode cannot prompt … auto-denied") is `no_permission`, not
+  `done`. Separate commit.
+
 Verified on a Windows box with cursor-agent logged in: `-p` /
 `--print`, `--output-format`, `--auto-review`, `--force`/`--yolo`,
 `--sandbox`, `--trust`, `--workspace`, `--model`, `--list-models`,

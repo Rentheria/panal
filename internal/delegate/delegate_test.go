@@ -191,6 +191,18 @@ func TestNoPermissionStopsTheChain(t *testing.T) {
 	}
 }
 
+func TestAgyHeadlessDenialIsNoPermission(t *testing.T) {
+	e := newEnv(t, []string{"agy", "codex"}, map[string]string{"agy": "perm", "codex": "ok"})
+	code, res := e.run("x", "agy")
+	if code != runs.ExitNoPermission || len(res) != 1 || res[0].Status != runs.NoPermission {
+		t.Fatalf("code %d, %v\n%s", code, statuses(res), e.out.String())
+	}
+	r := e.runFiles()["agy"]
+	if r.Status != runs.NoPermission || r.RC == nil || *r.RC != runs.ExitNoPermission {
+		t.Errorf("run file: %+v", r)
+	}
+}
+
 func TestRealFailureDoesNotFallBack(t *testing.T) {
 	e := newEnv(t, []string{"codex", "agy"}, map[string]string{"codex": "fail", "agy": "ok"})
 	code, res := e.run("x", "codex agy")

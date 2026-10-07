@@ -66,7 +66,9 @@ How the chain moves on:
 Quota and permission refusals are recognized from each CLI's exit code and
 error output, with one pattern table per CLI plus generic ones (HTTP 429,
 rate limit, quota exceeded, usage limit, out of credits, resource
-exhausted) in `internal/delegate/classify.go`.
+exhausted) in `internal/delegate/classify.go`. agy in print mode can exit
+0 after auto-denying a tool it cannot prompt for; that is `no_permission`,
+not `done`.
 
 ## How each agent is run
 

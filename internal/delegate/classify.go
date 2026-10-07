@@ -66,6 +66,10 @@ var quotaPatterns = map[string][]pattern{
 		p(runs.OutOfQuota, false, `exhausted your (capacity|quota)`),
 		p(runs.OutOfQuota, false, `(model|quota) (capacity|limit).{0,30}(reached|exceeded)`),
 		p(runs.NoPermission, false, `(permission|approval).{0,30}(denied|required|rejected)|not allowed in (plan|sandbox) mode`),
+		// Print / -p cannot prompt: agy auto-denies the tool and still
+		// exits 0 with no work (jetski on stdout; "Print mode:" in its log).
+		p(runs.NoPermission, true, `headless mode cannot prompt.{0,80}auto-denied`),
+		p(runs.NoPermission, true, `print mode: soft-denying tool confirmation`),
 	},
 	// cursor-agent (also invoked as agent): headless -p fails without
 	// --trust in an untrusted workspace; team admins can block headless;

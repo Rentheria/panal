@@ -70,6 +70,10 @@ func fakeCLI(args []string) int {
 			fmt.Fprintln(os.Stderr, "Untrusted workspace. Pass --trust to continue.")
 			return 1
 		}
+		if cli == "agy" {
+			fmt.Println(`jetski: no output produced — a tool required the "read_file"/"command" permission that headless mode cannot prompt for, so it was auto-denied`)
+			return 0
+		}
 		fmt.Fprintln(os.Stderr, "Not inside a trusted directory and --skip-git-repo-check was not specified.")
 		return 1
 	case "quota":

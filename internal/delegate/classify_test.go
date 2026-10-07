@@ -34,6 +34,9 @@ func TestClassify(t *testing.T) {
 		{"agy", 1, "Error 429: quota exceeded for the model", runs.OutOfQuota},
 		{"agy", 1, "out of credits", runs.OutOfQuota},
 		{"agy", 1, "tool permission denied", runs.NoPermission},
+		{"agy", 0, `jetski: no output produced — a tool required the "read_file"/"command" permission that headless mode cannot prompt for, so it was auto-denied`, runs.NoPermission},
+		{"agy", 0, `Print mode: soft-denying tool confirmation "RunCommand"`, runs.NoPermission},
+		{"agy", 0, "I explained how print mode soft-denies a tool confirmation in the docs", runs.Done},
 		{"agy", 2, "flag provided but not defined: -x", runs.Failed},
 		// cursor-agent
 		{"cursor", 1, "You've hit your usage limit. Upgrade or wait for the reset.", runs.OutOfQuota},
